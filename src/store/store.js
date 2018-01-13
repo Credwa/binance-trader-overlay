@@ -24,7 +24,6 @@ export const store = new Vuex.Store({
     },
     setStartingValue: (state, value) => {
       if (state.times < 1) {
-        console.log('test')
         state.startingValue = value;
         state.times++;
       }

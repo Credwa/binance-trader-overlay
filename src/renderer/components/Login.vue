@@ -41,9 +41,11 @@ export default {
     return {
       valid: false,
       loading: false,
-      apiKey: '',
+      apiKey:
+        '',
       apiKeyRules: [v => !!v || 'API Key is required'],
-      secret: '',
+      secret:
+        '',
       secretRules: [v => !!v || 'Secret is required']
     };
   },
@@ -52,20 +54,14 @@ export default {
     login() {
       this.loading = true;
       binance.options({
-        APIKEY:
-          this.apiKey,
-        APISECRET:
-          this.secret,
-        test: true
+        APIKEY: this.apiKey,
+        APISECRET: this.secret,
+        recvWindow: 1200000,
       });
       binance.balance(balances => {
         this.loading = false;
-        this.setAPIKey(
-          this.apiKey
-        );
-        this.setSecret(
-          this.secret
-        );
+        this.setAPIKey(this.apiKey);
+        this.setSecret(this.secret);
         this.$router.push('main');
         this.updateWindow();
       });
@@ -76,7 +72,10 @@ export default {
       let newWindowWidth = 500;
       let newWindowHeight = 200;
       loginWindow.setAlwaysOnTop(true);
-      loginWindow.setPosition(screenSize.width-newWindowWidth, screenSize.height - newWindowHeight - 100);
+      loginWindow.setPosition(
+        screenSize.width - newWindowWidth,
+        screenSize.height - newWindowHeight - 100
+      );
       loginWindow.setSize(newWindowWidth, newWindowHeight);
     },
     clear() {

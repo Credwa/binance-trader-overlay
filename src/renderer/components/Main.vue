@@ -228,11 +228,6 @@ export default {
   },
   created() {
     let self = this;
-    // binance.options({
-    //   APIKEY: this.getAPIKey,
-    //   APISECRET: this.getSecret,
-    //   test: true
-    // });
     binance.websockets.prevDay(this.mainCoin + 'USDT', function(response) {
       self.priceMainCoin = response.bestBid;
     });
@@ -241,8 +236,7 @@ export default {
         this.getAPIKey,
       APISECRET:
         this.getSecret,
-      test: true,
-      reconnect: false
+      recvWindow: 1200000,
     });
     this.getBalances();
 
