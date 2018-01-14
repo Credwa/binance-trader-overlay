@@ -63,7 +63,7 @@ export default {
   data() {
     return {
       currentCoin: { name: '', amount: 0, price: 0, percentChange: 0 },
-      mainCoin: 'ETH',
+      mainCoin: 'BTC',
       toggle_one: 0,
       priceMainCoin: 0,
       percentChangeMainCoin: 0,
@@ -134,7 +134,7 @@ export default {
     },
     storeOrders(coin) {
       let self = this;
-      binance.trades(coin + 'ETH', function(orders, symbol) {
+      binance.trades(coin + self.mainCoin, function(orders, symbol) {
         if (orders.length > 0) {
           self.subToSymbol(symbol)
           for (let i = 0; i < orders.length; i++) {

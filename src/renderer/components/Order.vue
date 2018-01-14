@@ -26,8 +26,8 @@
             <td  class="text-xs-center">{{ props.item.symbol }} </td>
             <td  class="text-xs-center">{{ props.item.price }}</td>
             <td  class="text-xs-center">{{ props.item.quantity }}</td>
-            <td  v-if="!switchUSD" class="text-xs-center"><span :style="(parseFloat(props.item.price * props.item.quantity) - parseFloat(symbolPrices[props.item.symbol].price * props.item.quantity)) > 0 ? 'color:#4caf50' : 'color: #f9a825'">{{ (parseFloat(props.item.price * props.item.quantity) - parseFloat(symbolPrices[props.item.symbol].price * props.item.quantity)).toFixed(8)</span> }}</td>
-            <td  v-if="switchUSD" class="text-xs-center">{{ ((parseFloat(props.item.price * props.item.quantity) - parseFloat(symbolPrices[props.item.symbol].price * props.item.quantity))* priceMainCoin).toFixed(8) }}</td>
+            <td  v-if="!switchUSD" class="text-xs-center"><span :style="(parseFloat(props.item.price * props.item.quantity) - parseFloat(symbolPrices[props.item.symbol].price * props.item.quantity)).toFixed(8) > 0 ? 'color:#4caf50' : 'color: #f9a825'">{{ (parseFloat(props.item.price * props.item.quantity) - parseFloat(symbolPrices[props.item.symbol].price * props.item.quantity)).toFixed(8) }} </span></td>
+            <td  v-if="switchUSD" class="text-xs-center"><span :style="(parseFloat(props.item.price * props.item.quantity) - parseFloat(symbolPrices[props.item.symbol].price * props.item.quantity)).toFixed(8) > 0 ? 'color:#4caf50' : 'color: #f9a825'">{{ ((parseFloat(props.item.price * props.item.quantity) - parseFloat(symbolPrices[props.item.symbol].price * props.item.quantity))* priceMainCoin).toFixed(8) }} </span></td>
             <td  class="text-xs-center">{{ props.item.side }}</td>
             <td  class="text-xs-center">{{ props.item.time | formatDate }}</td>
           </template>
