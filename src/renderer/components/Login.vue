@@ -11,13 +11,23 @@
           v-model="apiKey"
           :rules="apiKeyRules"
           required
+          autofocus
         ></v-text-field>
         <v-text-field
           label="Secret "
           v-model="secret"
           :rules="secretRules"
           required
+          autofocus
         ></v-text-field>
+        <v-checkbox
+          v-model="remembered"
+          value="1"
+          label="Remember me"
+          type="checkbox"
+          class="test"
+          required
+        ></v-checkbox>
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue" :disabled="!valid" @click="login">Login</v-btn>
@@ -31,8 +41,9 @@
 
 <script>
 const binance = require('node-binance-api');
-const remote = require('electron').remote;
 import { mapMutations, mapGetters } from 'vuex';
+const storage = require('electron-json-storage');
+const defaultDataPath = storage.getDefaultDataPath();
 
 export default {
   name: 'login',
@@ -40,12 +51,12 @@ export default {
   data() {
     return {
       valid: false,
+      remembered: false,
       loading: false,
-      apiKey:
-        '',
+      savedDataLoaded: false,
+      apiKey: '',
       apiKeyRules: [v => !!v || 'API Key is required'],
-      secret:
-        '',
+      secret: '',
       secretRules: [v => !!v || 'Secret is required']
     };
   },
@@ -56,9 +67,21 @@ export default {
       binance.options({
         APIKEY: this.apiKey,
         APISECRET: this.secret,
-        recvWindow: 1200000,
+        recvWindow: 1200000
       });
       binance.balance(balances => {
+
+        // save login info if remembered
+        if (this.remembered) {
+          storage.set(
+            'saved-login',
+            {
+              apiKey: this.apiKey,
+              secret: this.secret
+            },
+            error => {}
+          );
+        }
         this.loading = false;
         this.setAPIKey(this.apiKey);
         this.setSecret(this.secret);
@@ -69,8 +92,8 @@ export default {
     updateWindow() {
       let loginWindow = this.$electron.remote.getCurrentWindow();
       let screenSize = this.$electron.screen.getPrimaryDisplay().size;
-      let newWindowWidth = 500;
-      let newWindowHeight = 200;
+      let newWindowWidth = screenSize.width/2;
+      let newWindowHeight = 400;
       loginWindow.setAlwaysOnTop(true);
       loginWindow.setPosition(
         screenSize.width - newWindowWidth,
@@ -83,7 +106,19 @@ export default {
       this.apiKey = '';
     }
   },
-  mounted() {}
+  created() {
+    let self = this;
+    storage.has('saved-login', (error, hasKey) => {
+      if (hasKey) {
+        storage.get('saved-login', function(error, data) {
+          if (error) return;
+          self.savedDataLoaded = true;
+          self.apiKey = data.apiKey;
+          self.secret = data.secret;
+        });
+      }
+    });
+  }
 };
 </script>
 
@@ -102,5 +137,9 @@ export default {
 
 .login-form {
   width: 80%;
+}
+
+.test::selection {
+  background-color:red;
 }
 </style>

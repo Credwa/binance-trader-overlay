@@ -22,12 +22,9 @@ export default {
 .toolbar-height {
   max-height: 15vh;
 }
-* {
-  overflow:hidden;
-}
+
 html,
 body {
   background: rgba(0, 0, 0, 0);
-  overflow: hidden;
 }
 </style>
