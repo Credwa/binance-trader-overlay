@@ -1,0 +1,9 @@
+version: 0.0.0
+files:
+  - url: binance-trader-overlay-setup-0.0.0.exe
+    sha512: J5aae0G8wU4LNr3fldSZLB32OYPs88G7geh2yzJT6tPrPrWHFdVfbcoZGgCA73W1zYM/a5u93W6kFJxCrryIaw==
+    size: 37979069
+path: binance-trader-overlay-setup-0.0.0.exe
+sha512: J5aae0G8wU4LNr3fldSZLB32OYPs88G7geh2yzJT6tPrPrWHFdVfbcoZGgCA73W1zYM/a5u93W6kFJxCrryIaw==
+sha2: 9f0377a28cbf971557d8565413606030ef0504292ddfa6c4f84094178631c251
+releaseDate: '2018-01-15T23:20:21.977Z'

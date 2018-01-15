@@ -10,14 +10,7 @@
           <div style="margin-left:5%"><h4>{{currentCoin.name + '/' + mainCoin}} 24hr <span v-if="parseFloat(currentCoin.percentChange) > 0" style="color: #4caf50">+{{currentCoin.percentChange}}%</span>
           <span v-if="parseFloat(currentCoin.percentChange) < 0" style="color:#ef5350">{{currentCoin.percentChange}}%</span>
           </h4></div>
-          {{(currentCoin.price)}}
           <v-btn-toggle mandatory v-model="toggle_one" style="margin-left:5%">
-              <v-btn flat color="orange" @click="toggleMainCoin('BTC')">
-                BTC
-              </v-btn>
-              <!-- <v-btn flat color="blue" @click="toggleMainCoin('ETH')">
-                ETH
-              </v-btn> -->
           </v-btn-toggle>
           <v-switch v-model="switchUSD" style="color:white; top:12px; margin-left:2vw" name="showUSD"></v-switch>
           <v-menu open-on-hover top offset-y>
@@ -40,11 +33,33 @@
       <div v-if="!switchUSD"><h5><span style="color:#64b5f6"> {{currentCoin.name}}/{{mainCoin}}: </span>{{currentCoin.price}} </h5></div>
     </div>
 
+    <div class="infos">
     <div class="day-trading">
-      <div>Starting Value: <v-chip color="yellow darken-1">{{getStartingValue.toFixed(8)}} {{mainCoin}}</v-chip> / <v-chip color="green">${{(priceMainCoin * getStartingValue).toFixed(2)}}</v-chip></div>
+      <div>Starting Value: <v-chip color="yellow darken-1">{{startingValue.toFixed(8)}} {{mainCoin}}</v-chip> / <v-chip color="green">${{(priceMainCoin * startingValue).toFixed(2)}}</v-chip>
+      </div>
       <div>Current Estimated Value: <v-chip color="yellow darken-1">{{estimatedTotalPrice.toFixed(8)}} {{mainCoin}}</v-chip> / <v-chip color="green">${{(priceMainCoin * estimatedTotalPrice).toFixed(2)}}</v-chip></div>
+      <v-btn color="green lighten-6" @click="sessionStart">Start Session</v-btn>
     </div>
-    <orders :orders="orders" :symbolPrices="tradeSymbols" :priceMainCoin="priceMainCoin"></orders>
+
+    <div class="recentTradesUpdates">
+       <v-list dark>
+          <v-list-tile  v-for="order in orderUpdates" v-bind:key="order.time" @click="">
+            <v-list-tile-action>
+              <v-icon v-if="order.status === 'NEW'" color="blue">announcement</v-icon>
+              <v-icon v-if="order.status === 'FILLED'" color="green">done</v-icon>
+              <v-icon v-if="order.status === 'CANCELED' || order.status === 'REJECTED'" color="red">warning</v-icon>
+            </v-list-tile-action>
+            <v-list-tile-content>
+              <v-list-tile-title :style="order.side === 'SELL' ? 'color:red' : 'color:green'">{{order.symbol}} |
+                Price: {{order.price}} |
+                Quantity: {{order.origQty}}</v-list-tile-title>
+            </v-list-tile-content>
+          </v-list-tile>
+        </v-list>
+    </div>
+
+    </div>
+    <orders :orders="orders" :priceMainCoin="priceMainCoin"></orders>
   </div>
 </div>
 </template>
@@ -68,6 +83,7 @@ export default {
       priceMainCoin: 0,
       percentChangeMainCoin: 0,
       totalEstimatedValue: 0,
+      startingValue: 0,
       valid: false,
       loading: false,
       switchUSD: false,
@@ -79,11 +95,26 @@ export default {
       balance: 0,
       priceTicker: null,
       orders: [],
-      tradeSymbols: {}
+      tradeSymbols: {},
+      orderUpdates: [
+        {
+          symbol: 'null',
+          price: 'null',
+          origQty: 'null',
+          side: 'null',
+          orderId: 'null',
+          type: 'null',
+          status: 'null',
+          freshOrder: true
+        }
+      ]
     };
   },
   methods: {
-    ...mapMutations(['setAPIKey', 'setSecret', 'setStartingValue']),
+    ...mapMutations(['setAPIKey', 'setSecret']),
+    sessionStart() {
+      this.startingValue = this.estimatedTotalPrice;
+    },
     hideMenu() {
       let currWindow = this.$electron.remote.getCurrentWindow();
       currWindow.minimize();
@@ -103,13 +134,6 @@ export default {
       this.currentCoin.name = name;
       this.currentCoin.amount = amt;
       if (name === this.mainCoin) {
-        // binance.websockets.prevDay(
-        //   this.currentCoin.name + 'this.mainCoin',
-        //   function(response) {
-        //     self.currentCoin.price = response.bestBid;
-        //     self.currentCoin.percentChange = response.percentChange;
-        //   }
-        // );
       } else {
         // sub to new coin
         binance.websockets.prevDay(
@@ -121,31 +145,14 @@ export default {
         );
       }
     },
-    subToSymbol(symbol) {
-      console.log(symbol)
-      let self = this;
-      binance.websockets.prevDay(symbol, function(response) {
-        // self.priceMainCoin = response.bestBid;
-        // self.percentChangeMainCoin = response.percentChange;
-        // console.log(response)
-        self.$set(self.tradeSymbols, symbol, {percentChange: response.percentChange, price:response.bestBid});
-        // self.$set(self.tradeSymbols, symbol, response.percentChange);
-      });
-    },
     storeOrders(coin) {
       let self = this;
-      binance.trades(coin + self.mainCoin, function(orders, symbol) {
+      binance.allOrders(coin + 'BTC', function(orders, symbol) {
         if (orders.length > 0) {
-          self.subToSymbol(symbol)
           for (let i = 0; i < orders.length; i++) {
-            self.orders.unshift({
-              symbol,
-              price: orders[i].price,
-              quantity: orders[i].qty,
-              side: orders[i].isBuyer === true ? 'BUY' : 'SELL',
-              orderId: orders[i].orderId,
-              time: orders[i].time
-            });
+            if (orders[i].status !== 'CANCELED') {
+              self.orders.push(orders[i]);
+            }
           }
         }
       });
@@ -218,7 +225,6 @@ export default {
           self.currentCoin.percentChange = response.percentChange;
         }
       );
-      console.log(binance.websockets.subscriptions());
     },
     balance_update(data) {
       for (let obj of data.B) {
@@ -227,6 +233,10 @@ export default {
         this.balances[asset].available = available;
         this.balances[asset].onOrder = onOrder;
       }
+    },
+    orderUpdate(data) {
+      this.orderUpdates.pop();
+      this.orderUpdates.unshift(data);
     },
     execution_update(data) {
       let {
@@ -239,49 +249,70 @@ export default {
         i: orderId,
         X: orderStatus
       } = data;
-      if (executionType == 'NEW') {
-        if (orderStatus == 'REJECTED') {
-          console.log('Order Failed! Reason: ' + data.r);
-        }
+      if (orderStatus == 'NEW') {
+        this.orderUpdate({
+          symbol,
+          price,
+          origQty: quantity,
+          side,
+          orderId,
+          time: new Date().getTime(),
+          type: orderType,
+          status: orderStatus,
+          freshOrder: true
+        });
         this.orders.unshift({
           symbol,
           price,
-          quantity,
+          origQty: quantity,
           side,
           orderId,
-          time: new Date().getTime()
-        });
-        console.log(
-          symbol +
-            ' ' +
-            side +
-            ' ' +
-            orderType +
-            ' ORDER #' +
-            orderId +
-            ' (' +
-            orderStatus +
-            ')'
-        );
-        console.log('..price: ' + price + ', quantity: ' + quantity);
+          time: new Date().getTime(),
+          type: orderType,
+          status: orderStatus,
+          freshOrder: true
+        })
+        if (orderStatus == 'REJECTED') {
+          console.log('Order Failed! Reason: ' + data.r);
+        }
         return;
+      } else if (orderStatus === 'FILLED') {
+        this.orderUpdate({
+          symbol,
+          price,
+          origQty: quantity,
+          side,
+          orderId,
+          time: new Date().getTime(),
+          type: orderType,
+          status: orderStatus,
+          freshOrder: true
+        });
+        this.orders.find(element => {
+          return element.orderId === orderId;
+        }).status = orderStatus;
+        // console.log(data);
+      } else if (orderStatus === 'CANCELED' || orderStatus === 'EXPIRED') {
+        this.orderUpdate({
+          symbol,
+          price,
+          origQty: quantity,
+          side,
+          orderId,
+          time: new Date().getTime(),
+          type: orderType,
+          status: orderStatus,
+          freshOrder: true
+        });
+        this.orders = this.orders.filter(element => {
+          return element.orderId !== orderId;
+        });
       }
       //NEW, CANCELED, REPLACED, REJECTED, TRADE, EXPIRED
-      console.log(
-        symbol +
-          '\t' +
-          side +
-          ' ' +
-          executionType +
-          ' ' +
-          orderType +
-          ' ORDER #' +
-          orderId
-      );
     }
   },
   computed: {
-    ...mapGetters(['getAPIKey', 'getSecret', 'getStartingValue']),
+    ...mapGetters(['getAPIKey', 'getSecret']),
     estimatedTotalPrice() {
       let total = 0;
       if (this.balances && this.priceTicker) {
@@ -301,7 +332,6 @@ export default {
             }
           }
         }
-        this.setStartingValue(total);
       }
       return total;
     }
@@ -354,7 +384,7 @@ label {
 .top-details {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: space-around;
   align-items: center;
   align-items: center;
   flex-wrap: wrap;
@@ -363,11 +393,16 @@ label {
 .details {
   display: flex;
   flex-direction: row;
-  justify-content: space-around;
+  justify-content: space-between;
 }
 
 .drag {
   -webkit-app-region: drag;
+}
+.infos {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .remove:active {
