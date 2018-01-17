@@ -1,8 +1,12 @@
 <template>
-  <v-expansion-panel expand >
-    <v-expansion-panel-content style="background-color: rgba(0, 0, 0, .1); color: white">
-      <div slot="header">Orders</div>
-       <v-card dark style="background-color: rgba(0,0,0,.01)">
+       <v-card dark>
+        <div class="topIcons">
+          <v-icon dark large style="cursor:pointer" @click="goBack">keyboard_arrow_left</v-icon>
+          <v-spacer></v-spacer>
+          <v-icon dark large style="cursor:pointer" class="drag">drag_handle</v-icon>
+          <v-spacer></v-spacer>
+          <v-icon dark large style="cursor:pointer" class="remove" @click="hideMenu">remove</v-icon>
+        </div>
         <v-card-title>
           <v-switch v-model="switchUSD" style="color:white; top:12px; margin-left:2vw" name="showUSD"></v-switch>
           <v-spacer></v-spacer>
@@ -20,7 +24,7 @@
         </v-card-title>
         <v-data-table dark
             v-bind:headers="headers"
-            v-bind:items="orders"
+            v-bind:items="getOrders"
             v-bind:search="search"
             no-data-text="No orders found"
             style="background-color: rgba(0,0,0,.1)"
@@ -42,12 +46,12 @@
             <td  v-if="switchUSD" class="text-xs-center">
               <span v-if="parseFloat((symbolPrices[props.item.symbol] * props.item.origQty) -(props.item.price * props.item.origQty)).toFixed(2) > 0" style="color:#4caf50 ">
 
-                ${{ (parseFloat((symbolPrices[props.item.symbol]*props.item.origQty) - (props.item.price * props.item.origQty)) * priceMainCoin).toFixed(2) }}
+                ${{ (parseFloat((symbolPrices[props.item.symbol]*props.item.origQty) - (props.item.price * props.item.origQty)) * getPriceMainCoin).toFixed(2) }}
               </span>
 
                 <span v-else style="color:#f9a825 ">
 
-                -${{ parseFloat((symbolPrices[props.item.symbol] * props.item.origQty) - (props.item.price * props.item.origQty) * priceMainCoin).toFixed(2)* -1 }}
+                -${{ parseFloat((symbolPrices[props.item.symbol] * props.item.origQty) - (props.item.price * props.item.origQty) * getPriceMainCoin).toFixed(2)* -1 }}
 
               </span>
             </td>
@@ -76,17 +80,17 @@
               </v-card-text>
               <v-card-text class="subbedData" v-else>
                 <div>
-                <span>24Hr: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'">${{(subbedSymbolData.priceChange * priceMainCoin).toFixed(2)}} ({{subbedSymbolData.percentChange}}%)</span></span>
-                <span>AvgPrice: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'">${{(subbedSymbolData.averagePrice * priceMainCoin).toFixed(2)}} </span></span>
-                <span>Best Ask: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'"> ${{(subbedSymbolData.bestAsk * priceMainCoin).toFixed(2)}} </span></span>
-                <span>Best Bid: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'"> ${{(subbedSymbolData.bestBid * priceMainCoin).toFixed(2)}} </span></span>
+                <span>24Hr: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'">${{(subbedSymbolData.priceChange * getPriceMainCoin).toFixed(2)}} ({{subbedSymbolData.percentChange}}%)</span></span>
+                <span>AvgPrice: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'">${{(subbedSymbolData.averagePrice * getPriceMainCoin).toFixed(2)}} </span></span>
+                <span>Best Ask: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'"> ${{(subbedSymbolData.bestAsk * getPriceMainCoin).toFixed(2)}} </span></span>
+                <span>Best Bid: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'"> ${{(subbedSymbolData.bestBid * getPriceMainCoin).toFixed(2)}} </span></span>
                 </div>
 
                 <div>
-                <span>High: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'"> ${{(subbedSymbolData.high * priceMainCoin).toFixed(2)}} </span></span>
-                <span>Low: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'"> ${{(subbedSymbolData.low * priceMainCoin).toFixed(2)}} </span></span>
+                <span>High: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'"> ${{(subbedSymbolData.high * getPriceMainCoin).toFixed(2)}} </span></span>
+                <span>Low: <span :style="subbedSymbolData.percentChange > 0 ? 'color:#4caf50' : 'color: #f9a825'"> ${{(subbedSymbolData.low * getPriceMainCoin).toFixed(2)}} </span></span>
                 <span>Active Gain/Loss: <span :style="(parseFloat((subbedSymbolData.bestAsk *props.item.origQty) - (props.item.price * props.item.origQty))).toFixed(2) > 0 ? 'color:#4caf50' : 'color: #f9a825'">
-                ${{ (parseFloat((subbedSymbolData.bestAsk*props.item.origQty) - (props.item.price * props.item.origQty)) * priceMainCoin).toFixed(2) }}
+                ${{ (parseFloat((subbedSymbolData.bestAsk*props.item.origQty) - (props.item.price * props.item.origQty)) * getPriceMainCoin).toFixed(2) }}
               </span></span>
               </div>
               </v-card-text>
@@ -94,8 +98,6 @@
           </template>
         </v-data-table>
       </v-card>
-    </v-expansion-panel-content>
-  </v-expansion-panel>
 
 </template>
 
@@ -105,7 +107,6 @@ const binance = require('node-binance-api');
 import { mapMutations, mapGetters } from 'vuex';
 
 export default {
-  props: ['orders', 'priceMainCoin'],
   data() {
     return {
       max25chars: v => v.length <= 25 || 'Input too long!',
@@ -139,6 +140,23 @@ export default {
     }
   },
   methods: {
+    goBack() {
+      let loginWindow = this.$electron.remote.getCurrentWindow();
+      let screenSize = this.$electron.screen.getPrimaryDisplay().size;
+      let newWindowWidth = Math.floor(screenSize.width / 4.5);
+      let newWindowHeight = Math.floor(screenSize.height / 1.5);
+      loginWindow.setAlwaysOnTop(true);
+      loginWindow.setPosition(
+        screenSize.width - newWindowWidth,
+        screenSize.height - newWindowHeight - 100
+      );
+      loginWindow.setSize(newWindowWidth, newWindowHeight);
+      window.history.go(-1);
+    },
+    hideMenu() {
+      let currWindow = this.$electron.remote.getCurrentWindow();
+      currWindow.minimize();
+    },
     showCurrentGainLoss(symbol) {
       let self = this;
       binance.websockets.terminate(
@@ -165,7 +183,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['getAPIKey', 'getSecret']),
+    ...mapGetters(['getAPIKey', 'getSecret', 'getOrders', 'getPriceMainCoin']),
     pages() {
       return this.pagination.rowsPerPage
         ? Math.ceil(this.orders.length / this.pagination.rowsPerPage)
@@ -175,10 +193,8 @@ export default {
   created() {
     let self = this;
     binance.options({
-      APIKEY:
-        this.getAPIKey,
-      APISECRET:
-        this.getSecret,
+      APIKEY: this.getAPIKey,
+      APISECRET: this.getSecret,
       recvWindow: 1200000,
       reconnect: false
     });

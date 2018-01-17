@@ -16,6 +16,16 @@ export default new Router({
       component: require('@/components/Main').default,
     },
     {
+      path: '/trade',
+      name: 'trade',
+      component: require('@/components/Trade').default,
+    },
+    {
+      path: '/orders',
+      name: 'orders',
+      component: require('@/components/Order').default,
+    },
+    {
       path: '*',
       redirect: '/',
     },

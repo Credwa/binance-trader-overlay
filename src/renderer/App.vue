@@ -16,12 +16,6 @@ export default {
 
 <style>
 /* CSS */
-.dragme {
-  -webkit-app-region: drag;
-}
-.toolbar-height {
-  max-height: 15vh;
-}
 
 html,
 body {

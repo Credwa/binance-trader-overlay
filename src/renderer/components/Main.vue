@@ -3,6 +3,7 @@
   <div class="menu">
     <div class="topIcons">
       <v-icon dark large class="drag">drag_handle</v-icon>
+
       <v-icon dark large class="remove" @click="hideMenu">remove</v-icon>
     </div>
 
@@ -10,63 +11,80 @@
           <div style="margin-left:5%"><h4>{{currentCoin.name + '/' + mainCoin}} 24hr <span v-if="parseFloat(currentCoin.percentChange) > 0" style="color: #4caf50">+{{currentCoin.percentChange}}%</span>
           <span v-if="parseFloat(currentCoin.percentChange) < 0" style="color:#ef5350">{{currentCoin.percentChange}}%</span>
           </h4></div>
+          <div style="margin-right:5%">{{mainCoin}} Value: <span style="color: #4caf50">${{parseFloat(priceMainCoin).toLocaleString(undefined, {minimumFractionDigits: 4})}}</span></div>
+          <div>
+            <v-switch v-model="switchUSD" style="color:white; top:12px; margin-left:2vw" name="showUSD" class="text-xs-center"></v-switch>
+          </div>
+        <div style="display:flex; justify-content:center;">
           <v-btn-toggle mandatory v-model="toggle_one" style="margin-left:5%">
           </v-btn-toggle>
-          <v-switch v-model="switchUSD" style="color:white; top:12px; margin-left:2vw" name="showUSD"></v-switch>
-          <v-menu open-on-hover top offset-y>
+          <v-menu top offset-y>
             <v-btn color="red lighten-3" outline flat dark slot="activator" class="">Holdings</v-btn>
             <v-list>
+                  <v-list-tile v-on:click.stop="">
+                    <v-text-field
+                    append-icon="search"
+                    label="Search"
+                    single-line
+                    hide-details
+                    v-model="search"
+                    style="width: 10px"
+                ></v-text-field>
+                </v-list-tile>
               <v-list-tile :disabled="key === mainCoin" v-for="(balance,key) in balances" :key="key" @click="
-              if (key !== mainCoin)changeCurrentCoin(key, balance.available)" v-if="balance.available > 0">
+              if (key !== mainCoin)changeCurrentCoin(key, balance.available)" v-if="balance.available > 0 && search.length === 0">
                 <v-list-tile-title>{{key}}: {{balance.available}}</v-list-tile-title>
+              </v-list-tile>
+
+              <v-list-tile :disabled="balance.symbol === mainCoin" v-for="(balance,index) in balancesFilter" :key="index" @click="
+              if (balance.symbol !== mainCoin)changeCurrentCoin(balance.symbol, balance.available)" v-if="balance.available > 0 && search.length > 0">
+                <v-list-tile-title>{{balance.symbol}}: {{balance.available}}</v-list-tile-title>
               </v-list-tile>
             </v-list>
           </v-menu>
-          <div style="margin-right:5%">{{mainCoin}} Value: <span style="color: #4caf50">${{parseFloat(priceMainCoin).toLocaleString(undefined, {minimumFractionDigits: 4})}}</span></div>
+          <v-btn color="blue lighten-6" flat outline @click="openTrade" :disabled="currentCoin.name === 'BTC'">Trade</v-btn>
+        </div>
       </div>
 
     <div class="details">
-      <div style="margin-left: 5%"><h5><span style="color:#f9a825">{{currentCoin.name}} Balance: </span>{{currentCoin.amount}}    </h5></div>
+      <div style="margin-left: 5%; margin-right: 5%"><h5><span style="color:#f9a825">{{currentCoin.name}} Balance: </span>{{currentCoin.amount}}    </h5></div>
       <div v-if="switchUSD"><h5><span style="color:#4caf50"> USD Balance: </span>${{(currentCoin.amount * (currentCoin.price * priceMainCoin)).toFixed(2)}} </h5></div>
       <div v-if="!switchUSD"><h5><span style="color:#4caf50"> Estimated {{mainCoin}}: </span>{{(currentCoin.price * currentCoin.amount).toFixed(8)}} </h5></div>
       <div v-if="switchUSD"><h5><span style="color:#64b5f6">  {{currentCoin.name}}/USD: </span>${{((currentCoin.price * priceMainCoin)).toFixed(2)}} </h5></div>
       <div v-if="!switchUSD"><h5><span style="color:#64b5f6"> {{currentCoin.name}}/{{mainCoin}}: </span>{{currentCoin.price}} </h5></div>
     </div>
-
     <div class="infos">
     <div class="day-trading">
-      <div>Starting Value: <v-chip color="yellow darken-1">{{startingValue.toFixed(8)}} {{mainCoin}}</v-chip> / <v-chip color="green">${{(priceMainCoin * startingValue).toFixed(2)}}</v-chip>
+      <div>Starting Value: <v-chip color="yellow darken-1" v-if="!switchUSD">{{startingValue.toFixed(8)}} {{mainCoin}}</v-chip><v-chip v-if="switchUSD" color="green">${{(priceMainCoin * startingValue).toFixed(2)}}</v-chip>
       </div>
-      <div>Current Estimated Value: <v-chip color="yellow darken-1">{{estimatedTotalPrice.toFixed(8)}} {{mainCoin}}</v-chip> / <v-chip color="green">${{(priceMainCoin * estimatedTotalPrice).toFixed(2)}}</v-chip></div>
-      <v-btn color="green lighten-6" @click="sessionStart">Start Session</v-btn>
-    </div>
+      <div>Current Value: <v-chip v-if="!switchUSD" color="yellow darken-1">{{estimatedTotalPrice.toFixed(8)}} {{mainCoin}}</v-chip><v-chip v-if="switchUSD" color="green">${{(priceMainCoin * estimatedTotalPrice).toFixed(2)}}</v-chip></div>
 
-    <div class="recentTradesUpdates">
-       <v-list dark>
-          <v-list-tile  v-for="order in orderUpdates" v-bind:key="order.time" @click="">
-            <v-list-tile-action>
-              <v-icon v-if="order.status === 'NEW'" color="blue">announcement</v-icon>
-              <v-icon v-if="order.status === 'FILLED'" color="green">done</v-icon>
-              <v-icon v-if="order.status === 'CANCELED' || order.status === 'REJECTED'" color="red">warning</v-icon>
-            </v-list-tile-action>
-            <v-list-tile-content>
-              <v-list-tile-title :style="order.side === 'SELL' ? 'color:red' : 'color:green'">{{order.symbol}} |
-                Price: {{order.price}} |
-                Quantity: {{order.origQty}}</v-list-tile-title>
-            </v-list-tile-content>
-          </v-list-tile>
-        </v-list>
-    </div>
+      <div >Gain/Loss:
+        <span v-if="!switchUSD && startingValue > 0" :style="(estimatedTotalPrice - startingValue) >= 0 ? 'color: #4caf50' :  'color: #ef5350'">{{(estimatedTotalPrice - startingValue).toFixed(8)}}({{(((estimatedTotalPrice - startingValue)/startingValue )* 100).toFixed(3)}}%)</span>
 
+        <span v-if="switchUSD && startingValue > 0" :style="(estimatedTotalPrice - startingValue) >= 0 ? 'color: #4caf50' :  'color: #ef5350'">${{((estimatedTotalPrice - startingValue) * priceMainCoin).toFixed(2)}}({{(((estimatedTotalPrice - startingValue)/startingValue )* 100).toFixed(3)}}%)</span>
+
+        <span v-if="startingValue === 0">0(0.000%)</span>
+      </div>
+      <v-btn :color="sessionStatus" @click="sessionStart">{{sessionData}}</v-btn>
     </div>
-    <orders :orders="orders" :priceMainCoin="priceMainCoin"></orders>
+      <v-snackbar
+      :timeout="snackbar.timeout"
+      :top="snackbar.y"
+      v-model="snackbar.status"
+      :color="snackbar.color"
+    >
+      {{ snackbar.text }}
+      <v-btn flat color="orange" @click.native="snackbar.status = false">Close</v-btn>
+    </v-snackbar>
+    </div>
+    <v-btn color="blue" outline style="width:95%" @click="openOrders">orders</v-btn>
   </div>
 </div>
 </template>
 
 <script>
 const binance = require('node-binance-api');
-const remote = require('electron').remote;
 import Orders from './Order';
 import { mapMutations, mapGetters } from 'vuex';
 let tradeSymbols = {};
@@ -77,6 +95,18 @@ export default {
   },
   data() {
     return {
+      snackbar: {
+        status: false,
+        y: 'top',
+        x: null,
+        mode: '',
+        timeout: 3000,
+        text: '',
+        color: 'red lighten-4'
+      },
+      sessionData: 'Start Session',
+      sessionStatus: 'green lighten-6',
+      sessionInProgress: false,
       currentCoin: { name: '', amount: 0, price: 0, percentChange: 0 },
       mainCoin: 'BTC',
       toggle_one: 0,
@@ -86,6 +116,7 @@ export default {
       startingValue: 0,
       valid: false,
       loading: false,
+      search: '',
       switchUSD: false,
       apiKey: '',
       apiKeyRules: [v => !!v || 'API Key is required'],
@@ -111,9 +142,42 @@ export default {
     };
   },
   methods: {
-    ...mapMutations(['setAPIKey', 'setSecret']),
+    ...mapMutations(['setAPIKey', 'setSecret', 'setPriceMainCoin', 'setAddOrder', 'setOrderChange', 'setOrderFailed']),
+    openTrade() {
+      let window = this.$electron.remote.getCurrentWindow();
+      let screenSize = this.$electron.screen.getPrimaryDisplay().size;
+      let newWindowWidth = Math.floor(screenSize.width / 2.5);
+      let newWindowHeight = Math.floor(screenSize.height / 3);
+      window.setPosition(
+        screenSize.width - newWindowWidth,
+        screenSize.height - newWindowHeight - 100
+      );
+      window.setSize(newWindowWidth, newWindowHeight);
+      this.$router.push('trade');
+    },
+    openOrders() {
+      let window = this.$electron.remote.getCurrentWindow();
+      let screenSize = this.$electron.screen.getPrimaryDisplay().size;
+      let newWindowWidth = Math.floor(screenSize.width /1.3);
+      let newWindowHeight = Math.floor(screenSize.height / 2);
+      window.setPosition(
+        screenSize.width - newWindowWidth,
+        screenSize.height - newWindowHeight - 100
+      );
+      window.setSize(newWindowWidth, newWindowHeight);
+      this.$router.push('orders');
+    },
     sessionStart() {
-      this.startingValue = this.estimatedTotalPrice;
+      this.sessionInProgress = !this.sessionInProgress;
+      if (this.sessionInProgress) {
+        this.startingValue = this.estimatedTotalPrice;
+        this.sessionStatus = 'red darken-5';
+        this.sessionData = 'End Session';
+      } else {
+        this.startingValue = 0;
+        this.sessionStatus = 'green darken-5';
+        this.sessionData = 'Start Session';
+      }
     },
     hideMenu() {
       let currWindow = this.$electron.remote.getCurrentWindow();
@@ -151,7 +215,7 @@ export default {
         if (orders.length > 0) {
           for (let i = 0; i < orders.length; i++) {
             if (orders[i].status !== 'CANCELED') {
-              self.orders.push(orders[i]);
+              self.setAddOrder(orders[i]);
             }
           }
         }
@@ -216,6 +280,7 @@ export default {
       this.mainCoin = newCoin;
       binance.websockets.prevDay(this.mainCoin + 'USDT', function(response) {
         self.priceMainCoin = response.bestBid;
+        self.setPriceMainCoin(response.bestBid);
       });
 
       binance.websockets.prevDay(
@@ -237,6 +302,20 @@ export default {
     orderUpdate(data) {
       this.orderUpdates.pop();
       this.orderUpdates.unshift(data);
+      this.snackbar.status = true;
+      if (data.status === 'NEW') {
+        this.snackbar.color = 'green lighten-3';
+      } else if (data.status === 'FILLED') {
+        this.snackbar.color = 'blue lighten-3';
+      } else if (data.status === 'CANCELED') {
+        this.snackbar.color = 'red lighten-4';
+      }
+      this.snackbar.text = data.side + ' ';
+      data.origQty +
+        data.symbol.replace('BTC', '') +
+        ' for ' +
+        data.price +
+        'BTC';
     },
     execution_update(data) {
       let {
@@ -261,7 +340,7 @@ export default {
           status: orderStatus,
           freshOrder: true
         });
-        this.orders.unshift({
+        this.setAddOrder({
           symbol,
           price,
           origQty: quantity,
@@ -288,10 +367,7 @@ export default {
           status: orderStatus,
           freshOrder: true
         });
-        this.orders.find(element => {
-          return element.orderId === orderId;
-        }).status = orderStatus;
-        // console.log(data);
+        this.setOrderChange(orderId)
       } else if (orderStatus === 'CANCELED' || orderStatus === 'EXPIRED') {
         this.orderUpdate({
           symbol,
@@ -304,6 +380,7 @@ export default {
           status: orderStatus,
           freshOrder: true
         });
+        this.setOrderFailed(orderId);
         this.orders = this.orders.filter(element => {
           return element.orderId !== orderId;
         });
@@ -313,6 +390,24 @@ export default {
   },
   computed: {
     ...mapGetters(['getAPIKey', 'getSecret']),
+    balancesFilter() {
+      let tempBalances = [];
+      let reg = new RegExp(`${this.search.toUpperCase()}`);
+      for (let balance in this.balances) {
+        if (this.balances.hasOwnProperty(balance)) {
+          if (this.balances[balance].available > 0) {
+            tempBalances.push({
+              symbol: balance,
+              available: this.balances[balance].available
+            });
+          }
+        }
+      }
+      tempBalances = tempBalances.filter(element => {
+        return !element.symbol.search(reg);
+      });
+      return tempBalances;
+    },
     estimatedTotalPrice() {
       let total = 0;
       if (this.balances && this.priceTicker) {
@@ -341,13 +436,12 @@ export default {
     let self = this;
     binance.websockets.prevDay(this.mainCoin + 'USDT', function(response) {
       self.priceMainCoin = response.bestBid;
+      self.setPriceMainCoin(response.bestBid);
       self.percentChangeMainCoin = response.percentChange;
     });
     binance.options({
-      APIKEY:
-        this.getAPIKey,
-      APISECRET:
-        this.getSecret,
+      APIKEY: this.getAPIKey,
+      APISECRET: this.getSecret,
       recvWindow: 1200000,
       reconnect: false
     });
@@ -383,7 +477,7 @@ label {
 
 .top-details {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: space-around;
   align-items: center;
   align-items: center;
@@ -398,15 +492,17 @@ label {
 
 .drag {
   -webkit-app-region: drag;
+  cursor: pointer;
 }
 .infos {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: space-between;
 }
 
-.remove:active {
+.remove:hover {
   box-shadow: none;
+  cursor: pointer;
 }
 
 .topIcons {

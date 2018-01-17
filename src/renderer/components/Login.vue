@@ -1,5 +1,5 @@
 <template>
-   <v-card id="login" class="elevation-3">
+   <v-card id="login" class="elevation-3" style="padding:0;margin:0;">
     <v-card-title>
       <v-spacer></v-spacer>
       <h1 style="color:#42a5f5">Login</h1>
@@ -65,8 +65,8 @@ export default {
     login() {
       this.loading = true;
       binance.options({
-        APIKEY: this.apiKey,
-        APISECRET: this.secret,
+        APIKEY: this.apiKey.trim(),
+        APISECRET: this.secret.trim(),
         recvWindow: 1200000
       });
       binance.balance(balances => {
@@ -76,15 +76,15 @@ export default {
           storage.set(
             'saved-login',
             {
-              apiKey: this.apiKey,
-              secret: this.secret
+              apiKey: this.apiKey.trim(),
+              secret: this.secret.trim()
             },
             error => {}
           );
         }
         this.loading = false;
-        this.setAPIKey(this.apiKey);
-        this.setSecret(this.secret);
+        this.setAPIKey(this.apiKey.trim());
+        this.setSecret(this.secret.trim());
         this.$router.push('main');
         this.updateWindow();
       });
@@ -92,8 +92,8 @@ export default {
     updateWindow() {
       let loginWindow = this.$electron.remote.getCurrentWindow();
       let screenSize = this.$electron.screen.getPrimaryDisplay().size;
-      let newWindowWidth = screenSize.width/2;
-      let newWindowHeight = 400;
+      let newWindowWidth = Math.floor(screenSize.width/4.5);
+      let newWindowHeight = Math.floor(screenSize.height/1.5);
       loginWindow.setAlwaysOnTop(true);
       loginWindow.setPosition(
         screenSize.width - newWindowWidth,
