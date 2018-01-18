@@ -6,7 +6,7 @@
 
       <v-icon dark large class="remove" @click="hideMenu">remove</v-icon>
     </div>
-
+    <div v-if="!loadingData">
     <div class="top-details">
           <div style="margin-left:5%"><h4>{{currentCoin.name + '/' + mainCoin}} 24hr <span v-if="parseFloat(currentCoin.percentChange) > 0" style="color: #4caf50">+{{currentCoin.percentChange}}%</span>
           <span v-if="parseFloat(currentCoin.percentChange) < 0" style="color:#ef5350">{{currentCoin.percentChange}}%</span>
@@ -75,11 +75,13 @@
       :color="snackbar.color"
     >
       {{ snackbar.text }}
-      <v-btn flat color="orange" @click.native="snackbar.status = false">Close</v-btn>
+      <v-btn flat color="red" @click.native="snackbar.status = false">Close</v-btn>
     </v-snackbar>
     </div>
     <v-btn color="blue" outline style="width:95%" @click="openOrders">orders</v-btn>
   </div>
+  </div>
+  <div v-if="loadingData" style="display:flex; justify-content:center; align-items:center; align-content:center"><v-progress-circular indeterminate v-bind:size="120" v-bind:width="7" color="blue"></v-progress-circular></div>
 </div>
 </template>
 
@@ -115,7 +117,7 @@ export default {
       totalEstimatedValue: 0,
       startingValue: 0,
       valid: false,
-      loading: false,
+      loadingData: false,
       search: '',
       switchUSD: false,
       apiKey: '',
@@ -142,23 +144,36 @@ export default {
     };
   },
   methods: {
-    ...mapMutations(['setAPIKey', 'setSecret', 'setPriceMainCoin', 'setAddOrder', 'setOrderChange', 'setOrderFailed']),
+    ...mapMutations([
+      'setPriceMainCoin',
+      'setAddOrder',
+      'setOrderChange',
+      'setOrderFailed',
+      'setCurrentCoin',
+      'setCurrentCoinPrice',
+      'setBalanceMainCoin'
+    ]),
     openTrade() {
       let window = this.$electron.remote.getCurrentWindow();
       let screenSize = this.$electron.screen.getPrimaryDisplay().size;
-      let newWindowWidth = Math.floor(screenSize.width / 2.5);
-      let newWindowHeight = Math.floor(screenSize.height / 3);
+      let newWindowWidth = Math.floor(screenSize.width / 2);
+      let newWindowHeight = Math.floor(screenSize.height / 2.5);
       window.setPosition(
         screenSize.width - newWindowWidth,
         screenSize.height - newWindowHeight - 100
       );
       window.setSize(newWindowWidth, newWindowHeight);
+      this.setCurrentCoin({
+        name: this.currentCoin.name,
+        amount: this.currentCoin.amount
+      });
+      this.setCurrentCoinPrice(this.currentCoin.price);
       this.$router.push('trade');
     },
     openOrders() {
       let window = this.$electron.remote.getCurrentWindow();
       let screenSize = this.$electron.screen.getPrimaryDisplay().size;
-      let newWindowWidth = Math.floor(screenSize.width /1.3);
+      let newWindowWidth = Math.floor(screenSize.width / 1.3);
       let newWindowHeight = Math.floor(screenSize.height / 2);
       window.setPosition(
         screenSize.width - newWindowWidth,
@@ -185,6 +200,7 @@ export default {
     },
     changeCurrentCoin(name, amt) {
       // change current coin when new coin in holding is clicked
+      this.loadingData = true;
       let self = this;
 
       // unsub to old coin
@@ -205,6 +221,7 @@ export default {
           function(response) {
             self.currentCoin.price = response.bestBid;
             self.currentCoin.percentChange = response.percentChange;
+            self.loadingData = false;
           }
         );
       }
@@ -236,6 +253,9 @@ export default {
         let newBalances = [];
         for (let balance in balances) {
           if (balances.hasOwnProperty(balance)) {
+            if (balance === self.mainCoin) {
+              self.setBalanceMainCoin(balances[balance].available);
+            }
             if (balances[balance].available > 0) {
               if (balance !== 'GAS' && balance !== 'ETF') {
                 // temp solution
@@ -251,8 +271,13 @@ export default {
         self.balances = balances;
 
         // set default current coin to coin with greatest balance
-        self.currentCoin.name = newBalances[0].name;
-        self.currentCoin.amount = newBalances[0].amount;
+        if (newBalances[0].name === self.mainCoin && newBalances.length > 1) {
+          self.currentCoin.name = newBalances[1].name;
+          self.currentCoin.amount = newBalances[1].amount;
+        } else {
+          self.currentCoin.name = newBalances[0].name;
+          self.currentCoin.amount = newBalances[0].amount;
+        }
 
         // subscribe to current coin to get data
         binance.websockets.prevDay(
@@ -260,6 +285,7 @@ export default {
           function(response) {
             self.currentCoin.price = response.bestBid;
             self.currentCoin.percentChange = response.percentChange;
+            self.loadingData = false;
           }
         );
       });
@@ -297,6 +323,15 @@ export default {
         if (available == '0.00000000') continue;
         this.balances[asset].available = available;
         this.balances[asset].onOrder = onOrder;
+        if (asset === this.mainCoin) {
+          this.setBalanceMainCoin(this.balances[asset].available);
+        }
+        if (asset === this.getCurrentCoin.name) {
+          this.setCurrentCoin({
+            name: asset,
+            amount: this.balances[asset].available
+          });
+        }
       }
     },
     orderUpdate(data) {
@@ -310,8 +345,11 @@ export default {
       } else if (data.status === 'CANCELED') {
         this.snackbar.color = 'red lighten-4';
       }
-      this.snackbar.text = data.side + ' ';
-      data.origQty +
+      console.log(data);
+      this.snackbar.text =
+        data.side +
+        ' ' +
+        data.origQty +
         data.symbol.replace('BTC', '') +
         ' for ' +
         data.price +
@@ -350,7 +388,7 @@ export default {
           type: orderType,
           status: orderStatus,
           freshOrder: true
-        })
+        });
         if (orderStatus == 'REJECTED') {
           console.log('Order Failed! Reason: ' + data.r);
         }
@@ -367,7 +405,7 @@ export default {
           status: orderStatus,
           freshOrder: true
         });
-        this.setOrderChange(orderId)
+        this.setOrderChange(orderId);
       } else if (orderStatus === 'CANCELED' || orderStatus === 'EXPIRED') {
         this.orderUpdate({
           symbol,
@@ -389,7 +427,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['getAPIKey', 'getSecret']),
+    ...mapGetters(['getAPIKey', 'getSecret', 'getCurrentCoin']),
     balancesFilter() {
       let tempBalances = [];
       let reg = new RegExp(`${this.search.toUpperCase()}`);
@@ -433,6 +471,7 @@ export default {
   },
 
   created() {
+    this.loadingData = true;
     let self = this;
     binance.websockets.prevDay(this.mainCoin + 'USDT', function(response) {
       self.priceMainCoin = response.bestBid;
