@@ -7,6 +7,15 @@
           <v-spacer></v-spacer>
           <v-icon dark large style="cursor:pointer" class="remove" @click="hideMenu">remove</v-icon>
         </div>
+        <v-snackbar
+          :timeout="snackbar.timeout"
+          :top="snackbar.y"
+          v-model="snackbar.status"
+          :color="snackbar.color"
+        >
+          {{ snackbar.text }}
+          <v-btn flat color="red" @click.native="snackbar.status = false">Close</v-btn>
+        </v-snackbar>
         <v-card-title>
           <v-switch v-model="switchUSD" style="color:white; top:12px; margin-left:2vw" name="showUSD"></v-switch>
           <v-spacer></v-spacer>
@@ -23,15 +32,14 @@
           ></v-text-field>
         </v-card-title>
         <v-data-table dark
-            v-bind:headers="headers"
-            v-bind:items="getOrders"
-            v-bind:search="search"
+            :headers="headers"
+            :items="getOrders"
+            :search="search"
             no-data-text="No orders found"
             style="background-color: rgba(0,0,0,.1)"
             item-key="orderId"
-            default-sort="date"
-            :pagination.sync="pagination"
-            :total-items="totalItems"
+            :disable-initial-sort="true"
+            :customFilter="customFilter"
           >
           <template slot="items" slot-scope="props">
             <tr class="a-row" @click="showCurrentGainLoss(props.item.symbol); props.expanded = !props.expanded" :style="props.item.status === 'NEW' ? 'background-color:rgba(47, 139, 206, .2)' : (props.item.freshOrder) === true ? 'background-color:rgba(37, 196, 53,.2)' : 0">
@@ -55,9 +63,11 @@
 
               </span>
             </td>
-            <td  class="text-xs-center" :style="props.item.side === 'BUY' ? 'color:green' : 'color:red'">{{ props.item.side  }}/<span :style="props.item.type === 'MARKET' ? 'color:#81d4fa' : (props.item.type === 'LIMIT' ? 'color: #ffd54f' : 'color:#9ccc65')">{{props.item.type}}</span></td>
+            <td  class="text-xs-center" :style="props.item.side === 'BUY' ? 'color:green' : 'color:red'">{{ props.item.side  }}</td>
+
+            <td class="text-xs-center"><span :style="props.item.type === 'MARKET' ? 'color:#81d4fa' : (props.item.type === 'LIMIT' ? 'color: #ffd54f' : 'color:#9ccc65')">{{props.item.type}}</span></td>
             <td  class="text-xs-center">{{ props.item.status }}</td>
-            <td  class="text-xs-center">{{ props.item.time | formatDate }}</td>
+            <td  class="text-xs-center">{{ props.item.time }}</td>
             </tr>
           </template>
           <template slot="expand" slot-scope="props" >
@@ -123,14 +133,25 @@ export default {
       symbolPrices: {},
       sum: 0,
       selected: [],
+      snackbar: {
+        status: false,
+        y: 'top',
+        x: null,
+        mode: '',
+        timeout: 3000,
+        text: '',
+        color: 'red lighten-4'
+      },
       headers: [
-        { text: 'Symbol', align: 'center', value: 'symbol' },
+        { text: 'Symbol', align: 'center', value: 'symbol', sortable: false },
         { text: 'Price', align: 'center', value: 'price' },
         { text: 'origQty', align: 'center', value: 'origQty' },
         { text: 'Gain/Loss', align: 'center', value: 'gain/loss' },
-        { text: 'Type', align: 'center', value: 'side' },
+        { text: 'Side', align: 'center', value: 'side' },
+        { text: 'Type', align: 'center', value: 'type' },
         { text: 'Status', align: 'center', value: 'status' },
-        { text: 'Date', align: 'center', value: 'date' }
+        { text: 'Date', align: 'center', value: 'time', sortable: false },
+
       ]
     };
   },
@@ -140,6 +161,13 @@ export default {
     }
   },
   methods: {
+    ...mapMutations([
+      'setNewOrder',
+      'setOrderChange',
+      'setBalanceMainCoin',
+      'setOrderFailed',
+      'setCurrentCoin'
+    ]),
     goBack() {
       let loginWindow = this.$electron.remote.getCurrentWindow();
       let screenSize = this.$electron.screen.getPrimaryDisplay().size;
@@ -152,6 +180,7 @@ export default {
       );
       loginWindow.setSize(newWindowWidth, newWindowHeight);
       window.history.go(-1);
+      console.log(binance.websockets.subscriptions());
     },
     hideMenu() {
       let currWindow = this.$electron.remote.getCurrentWindow();
@@ -180,14 +209,140 @@ export default {
           self.refreshed = false;
         }, 1000);
       });
+    },
+    customFilter(items, filterKey) {
+      if (filterKey) {
+        let search = new RegExp(
+          filterKey.replace(/ [\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&'),
+          'i'
+        );
+
+        return items.filter(row =>
+          this.headers.some(column => {
+            return search.test(row[column.value]);
+          })
+        );
+      }
+
+      return items;
+    },
+    balance_update(data) {
+      for (let obj of data.B) {
+        let { a: asset, f: available, l: onOrder } = obj;
+        if (available == '0.00000000') continue;
+        if (asset === this.mainCoin) {
+          this.setBalanceMainCoin(available);
+        }
+        if (asset === this.getCurrentCoin.name) {
+          this.setCurrentCoin({
+            name: asset,
+            amount: available
+          });
+        }
+      }
+    },
+    orderUpdate(data) {
+      this.snackbar.status = true;
+      if (data.status === 'NEW') {
+        this.snackbar.color = 'blue lighten-3';
+      } else if (data.status === 'FILLED') {
+        this.snackbar.color = 'green lighten-3blue lighten-3';
+      } else if (data.status === 'CANCELED') {
+        this.snackbar.color = 'red lighten-4';
+      }
+      this.snackbar.text =
+        data.side +
+        ' ' +
+        data.origQty +
+        data.symbol.replace('BTC', '') +
+        ' for ' +
+        data.price +
+        'BTC';
+    },
+    execution_update(data) {
+      let {
+        x: executionType,
+        s: symbol,
+        p: price,
+        q: quantity,
+        S: side,
+        o: orderType,
+        i: orderId,
+        X: orderStatus
+      } = data;
+      if (orderStatus == 'NEW') {
+        this.orderUpdate({
+          symbol,
+          price,
+          origQty: quantity,
+          side,
+          orderId,
+          time: new Date().getTime(),
+          type: orderType,
+          status: orderStatus,
+          freshOrder: true
+        });
+        this.setNewOrder({
+          symbol,
+          price,
+          origQty: quantity,
+          side,
+          orderId,
+          time: new Date().getTime(),
+          type: orderType,
+          status: orderStatus,
+          freshOrder: true
+        });
+        if (orderStatus == 'REJECTED') {
+          console.log('Order Failed! Reason: ' + data.r);
+        }
+        return;
+      } else if (orderStatus === 'FILLED') {
+        this.orderUpdate({
+          symbol,
+          price,
+          origQty: quantity,
+          side,
+          orderId,
+          time: new Date().getTime(),
+          type: orderType,
+          status: orderStatus,
+          freshOrder: true
+        });
+        this.setOrderChange(orderId);
+      } else if (orderStatus === 'CANCELED' || orderStatus === 'EXPIRED') {
+        this.orderUpdate({
+          symbol,
+          price,
+          origQty: quantity,
+          side,
+          orderId,
+          time: new Date().getTime(),
+          type: orderType,
+          status: orderStatus,
+          freshOrder: true
+        });
+        this.setOrderFailed(orderId);
+      }
+      //NEW, CANCELED, REPLACED, REJECTED, TRADE, EXPIRED
     }
   },
   computed: {
-    ...mapGetters(['getAPIKey', 'getSecret', 'getOrders', 'getPriceMainCoin']),
+    ...mapGetters([
+      'getAPIKey',
+      'getSecret',
+      'getOrders',
+      'getPriceMainCoin',
+      'getCurrentCoin'
+    ]),
     pages() {
       return this.pagination.rowsPerPage
-        ? Math.ceil(this.orders.length / this.pagination.rowsPerPage)
+        ? Math.ceil(this.getOrders.length / this.pagination.rowsPerPage)
         : 0;
+    },
+    testOrders() {
+      let temp = this.getOrders;
+      return temp;
     }
   },
   created() {
@@ -195,13 +350,15 @@ export default {
     binance.options({
       APIKEY: this.getAPIKey,
       APISECRET: this.getSecret,
-      recvWindow: 1200000,
+      useServerTime: true,
       reconnect: false
     });
 
     binance.prices(function(ticker) {
       self.symbolPrices = ticker;
     });
+
+    binance.websockets.userData(this.balance_update, this.execution_update);
   }
 };
 </script>

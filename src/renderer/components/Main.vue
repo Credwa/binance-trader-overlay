@@ -129,29 +129,19 @@ export default {
       priceTicker: null,
       orders: [],
       tradeSymbols: {},
-      orderUpdates: [
-        {
-          symbol: 'null',
-          price: 'null',
-          origQty: 'null',
-          side: 'null',
-          orderId: 'null',
-          type: 'null',
-          status: 'null',
-          freshOrder: true
-        }
-      ]
     };
   },
   methods: {
     ...mapMutations([
       'setPriceMainCoin',
       'setAddOrder',
+      'setNewOrder',
       'setOrderChange',
       'setOrderFailed',
       'setCurrentCoin',
       'setCurrentCoinPrice',
-      'setBalanceMainCoin'
+      'setBalanceMainCoin',
+      'incrementOrderCount'
     ]),
     openTrade() {
       let window = this.$electron.remote.getCurrentWindow();
@@ -181,6 +171,7 @@ export default {
       );
       window.setSize(newWindowWidth, newWindowHeight);
       this.$router.push('orders');
+      this.incrementOrderCount();
     },
     sessionStart() {
       this.sessionInProgress = !this.sessionInProgress;
@@ -335,17 +326,14 @@ export default {
       }
     },
     orderUpdate(data) {
-      this.orderUpdates.pop();
-      this.orderUpdates.unshift(data);
       this.snackbar.status = true;
       if (data.status === 'NEW') {
-        this.snackbar.color = 'green lighten-3';
-      } else if (data.status === 'FILLED') {
         this.snackbar.color = 'blue lighten-3';
+      } else if (data.status === 'FILLED') {
+        this.snackbar.color = 'green lighten-3blue lighten-3';
       } else if (data.status === 'CANCELED') {
         this.snackbar.color = 'red lighten-4';
       }
-      console.log(data);
       this.snackbar.text =
         data.side +
         ' ' +
@@ -378,7 +366,7 @@ export default {
           status: orderStatus,
           freshOrder: true
         });
-        this.setAddOrder({
+        this.setNewOrder({
           symbol,
           price,
           origQty: quantity,
@@ -419,9 +407,6 @@ export default {
           freshOrder: true
         });
         this.setOrderFailed(orderId);
-        this.orders = this.orders.filter(element => {
-          return element.orderId !== orderId;
-        });
       }
       //NEW, CANCELED, REPLACED, REJECTED, TRADE, EXPIRED
     }
@@ -481,7 +466,7 @@ export default {
     binance.options({
       APIKEY: this.getAPIKey,
       APISECRET: this.getSecret,
-      recvWindow: 1200000,
+      useServerTime: true,
       reconnect: false
     });
     this.getBalances();

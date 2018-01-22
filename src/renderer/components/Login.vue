@@ -11,6 +11,7 @@
           v-model="apiKey"
           :rules="apiKeyRules"
           required
+          type="password"
           autofocus
         ></v-text-field>
         <v-text-field
@@ -19,6 +20,7 @@
           :rules="secretRules"
           required
           autofocus
+          type="password"
         ></v-text-field>
         <v-checkbox
           v-model="remembered"
@@ -67,7 +69,7 @@ export default {
       binance.options({
         APIKEY: this.apiKey.trim(),
         APISECRET: this.secret.trim(),
-        recvWindow: 1200000
+        useServerTime: true,
       });
       binance.balance(balances => {
 

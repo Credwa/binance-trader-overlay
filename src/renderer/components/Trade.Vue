@@ -8,8 +8,26 @@
       <v-spacer></v-spacer>
       <v-icon light large style="cursor:pointer" class="remove" @click="hideMenu">remove</v-icon>
     </div>
+    <v-snackbar
+    :timeout="snackbar.timeout"
+    :top="snackbar.y"
+    v-model="snackbar.status"
+    :color="snackbar.color"
+    >
+      {{ snackbar.text }}
+      <v-btn flat color="red" @click.native="snackbar.status = false">Close</v-btn>
+    </v-snackbar>
+    <v-snackbar
+    :timeout="snackbarError.timeout"
+    :top="snackbarError.y"
+    v-model="snackbarError.status"
+    :color="snackbarError.color"
+    >
+      {{ snackbarError.text }}
+      <v-btn flat color="red" @click.native="snackbarError.status = false">Close</v-btn>
+    </v-snackbar>
     <v-tabs v-model="active" v-if="!this.loading && !this.complete">
-      <span style="color:red; display:flex; justify-content:center;" v-if="errorMessage">{{errorMessage}}!!</span>
+      <span style="color:red; display:flex; justify-content:center;" v-if="errorMessage">{{errorMessage}}</span>
       <v-tabs-bar class="green darken-3" dark>
         <v-tabs-item
           v-for="tab in tabs"
@@ -188,13 +206,31 @@ export default {
       sellPrice: null,
       buttonTradePercentages: [25, 50, 75, 100],
       traded: {},
+      snackbar: {
+        status: false,
+        y: 'top',
+        x: null,
+        mode: '',
+        timeout: 3000,
+        text: '',
+        color: 'red lighten-4'
+      },
+      snackbarError: {
+        status: false,
+        y: 'top',
+        x: null,
+        mode: '',
+        timeout: 3000,
+        text: '',
+        color: 'red lighten-6'
+      },
       errorMessage: null
     };
   },
   methods: {
     ...mapMutations([
       'setPriceMainCoin',
-      'setAddOrder',
+      'setNewOrder',
       'setOrderChange',
       'setOrderFailed',
       'setCurrentCoin',
@@ -219,14 +255,18 @@ export default {
       window.history.go(-1);
     },
     percentSellAmount(percent) {
-      this.sellAmount = (this.getCurrentCoin.amount * percent).toFixed(0);
+      this.sellAmount = Math.floor(
+        (this.getCurrentCoin.amount * percent).toFixed(2)
+      );
     },
     percentBuyAmount(percent) {
-      this.buyAmount = (
-        parseFloat(this.getBalanceMainCoin) /
-        parseFloat(this.getCurrentCoinPrice) *
-        percent
-      ).toFixed(0);
+      this.buyAmount = Math.floor(
+        (
+          parseFloat(this.getBalanceMainCoin) /
+          parseFloat(this.getCurrentCoinPrice) *
+          percent
+        ).toFixed(2)
+      );
     },
     placeBuyOrder(type) {
       this.loading = true;
@@ -235,14 +275,39 @@ export default {
         binance.marketBuy(
           this.getCurrentCoin.name + 'BTC',
           this.buyAmount,
-          {},
           function(resp) {
+            if (resp.msg) {
+              self.snackbarError.text = resp.msg;
+              self.snackbarError.status = true;
+            } else {
+              console.log(resp);
+              self.loading = false;
+              self.complete = true;
+              setTimeout(() => {
+                self.complete = false;
+              }, 3000);
+              self.traded = resp;
+            }
+          }
+        );
+      } else if (type === 'Limit') {
+        binance.buy(
+          this.getCurrentCoin.name + 'BTC',
+          this.buyAmount,
+          this.buyPrice,
+          { type: 'LIMIT' },
+          (error, response) => {
             self.loading = false;
-            self.complete = true;
-            setTimeout(() => {
-              self.complete = false;
-            }, 3000);
-            self.traded = resp;
+            if (error.msg) {
+              self.snackbarError.text = error.msg;
+              self.snackbarError.status = true;
+            } else {
+              self.complete = true;
+              setTimeout(() => {
+                self.complete = false;
+              }, 3000);
+              self.traded = error;
+            }
           }
         );
       } else if (type === 'Stop-Limit') {
@@ -252,12 +317,18 @@ export default {
           this.limitBuy,
           { stopPrice: this.stopBuy, type: 'STOP_LOSS' },
           function(resp) {
-            self.loading = false;
-            self.complete = true;
-            setTimeout(() => {
-              self.complete = false;
-            }, 3000);
-            self.traded = resp;
+            if (resp.msg) {
+              self.snackbarError.text = resp.msg;
+              self.snackbarError.status = true;
+            } else {
+              console.log(resp);
+              self.loading = false;
+              self.complete = true;
+              setTimeout(() => {
+                self.complete = false;
+              }, 3000);
+              self.traded = resp;
+            }
           }
         );
       }
@@ -274,14 +345,19 @@ export default {
         binance.marketSell(
           this.getCurrentCoin.name + 'BTC',
           this.sellAmount,
-          {},
           function(resp) {
-            self.loading = false;
-            self.complete = true;
-            setTimeout(() => {
-              self.complete = false;
-            }, 3000);
-            self.traded = resp;
+            if (resp.msg) {
+              self.snackbarError.text = resp.msg;
+              self.snackbarError.status = true;
+            } else {
+              console.log(resp);
+              self.loading = false;
+              self.complete = true;
+              setTimeout(() => {
+                self.complete = false;
+              }, 3000);
+              self.traded = resp;
+            }
           }
         );
       } else if (type === 'Limit') {
@@ -289,14 +365,20 @@ export default {
           this.getCurrentCoin.name + 'BTC',
           this.sellAmount,
           this.sellPrice,
-          {},
+          { type: 'LIMIT' },
           function(resp) {
-            self.loading = false;
-            self.complete = true;
-            setTimeout(() => {
-              self.complete = false;
-            }, 3000);
-            self.traded = resp;
+            if (resp.msg) {
+              self.snackbarError.text = resp.msg;
+              self.snackbarError.status = true;
+            } else {
+              console.log(resp);
+              self.loading = false;
+              self.complete = true;
+              setTimeout(() => {
+                self.complete = false;
+              }, 3000);
+              self.traded = resp;
+            }
           }
         );
       } else if (type === 'Stop-Limit') {
@@ -306,26 +388,32 @@ export default {
           this.limitSell,
           { stopPrice: this.stopSell, type: 'STOP_LOSS' },
           function(resp) {
-            self.loading = false;
-            self.complete = true;
-            setTimeout(() => {
-              self.complete = false;
-            }, 3000);
-            self.traded = resp;
+            if (resp.msg) {
+              self.snackbarError.text = resp.msg;
+              self.snackbarError.status = true;
+            } else {
+              console.log(resp);
+              self.loading = false;
+              self.complete = true;
+              setTimeout(() => {
+                self.complete = false;
+              }, 3000);
+              self.traded = resp;
+            }
           }
         );
       }
       setTimeout(() => {
         this.errorMessage = 'Failed to Sell';
         this.loading = false;
-      }, 10000);
+      }, 5000);
       this.sellAmount = 0;
     },
     balance_update(data) {
       for (let obj of data.B) {
         let { a: asset, f: available, l: onOrder } = obj;
         if (available == '0.00000000') continue;
-        if (asset === 'BTC') {
+        if (asset === this.mainCoin) {
           this.setBalanceMainCoin(available);
         }
         if (asset === this.getCurrentCoin.name) {
@@ -335,6 +423,24 @@ export default {
           });
         }
       }
+    },
+    orderUpdate(data) {
+      this.snackbar.status = true;
+      if (data.status === 'NEW') {
+        this.snackbar.color = 'blue lighten-3';
+      } else if (data.status === 'FILLED') {
+        this.snackbar.color = 'green lighten-3blue lighten-3';
+      } else if (data.status === 'CANCELED') {
+        this.snackbar.color = 'red lighten-4';
+      }
+      this.snackbar.text =
+        data.side +
+        ' ' +
+        data.origQty +
+        data.symbol.replace('BTC', '') +
+        ' for ' +
+        data.price +
+        'BTC';
     },
     execution_update(data) {
       let {
@@ -348,7 +454,18 @@ export default {
         X: orderStatus
       } = data;
       if (orderStatus == 'NEW') {
-        this.setAddOrder({
+        this.orderUpdate({
+          symbol,
+          price,
+          origQty: quantity,
+          side,
+          orderId,
+          time: new Date().getTime(),
+          type: orderType,
+          status: orderStatus,
+          freshOrder: true
+        });
+        this.setNewOrder({
           symbol,
           price,
           origQty: quantity,
@@ -364,8 +481,30 @@ export default {
         }
         return;
       } else if (orderStatus === 'FILLED') {
+        this.orderUpdate({
+          symbol,
+          price,
+          origQty: quantity,
+          side,
+          orderId,
+          time: new Date().getTime(),
+          type: orderType,
+          status: orderStatus,
+          freshOrder: true
+        });
         this.setOrderChange(orderId);
       } else if (orderStatus === 'CANCELED' || orderStatus === 'EXPIRED') {
+        this.orderUpdate({
+          symbol,
+          price,
+          origQty: quantity,
+          side,
+          orderId,
+          time: new Date().getTime(),
+          type: orderType,
+          status: orderStatus,
+          freshOrder: true
+        });
         this.setOrderFailed(orderId);
       }
       //NEW, CANCELED, REPLACED, REJECTED, TRADE, EXPIRED
@@ -402,7 +541,7 @@ export default {
     binance.options({
       APIKEY: this.getAPIKey,
       APISECRET: this.getSecret,
-      recvWindow: 1200000,
+      useServerTime: true,
       reconnect: false
     });
     binance.websockets.userData(this.balance_update, this.execution_update);
