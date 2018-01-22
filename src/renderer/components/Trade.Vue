@@ -315,7 +315,7 @@ export default {
           this.getCurrentCoin.name + 'BTC',
           this.buyAmount,
           this.limitBuy,
-          { stopPrice: this.stopBuy, type: 'STOP_LOSS' },
+          { stopPrice: this.stopBuy, type: 'TAKE_PROFIT_LIMIT' },
           function(resp) {
             if (resp.msg) {
               self.snackbarError.text = resp.msg;
@@ -386,7 +386,7 @@ export default {
           this.getCurrentCoin.name + 'BTC',
           this.sellAmount,
           this.limitSell,
-          { stopPrice: this.stopSell, type: 'STOP_LOSS' },
+          { stopPrice: this.stopSell, type: 'TAKE_PROFIT_LIMIT' },
           function(resp) {
             if (resp.msg) {
               self.snackbarError.text = resp.msg;
@@ -404,7 +404,6 @@ export default {
         );
       }
       setTimeout(() => {
-        this.errorMessage = 'Failed to Sell';
         this.loading = false;
       }, 5000);
       this.sellAmount = 0;
