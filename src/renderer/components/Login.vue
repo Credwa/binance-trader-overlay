@@ -69,10 +69,9 @@ export default {
       binance.options({
         APIKEY: this.apiKey.trim(),
         APISECRET: this.secret.trim(),
-        useServerTime: true,
+        useServerTime: true
       });
-      binance.balance(balances => {
-
+      binance.balance((balances, error) => {
         // save login info if remembered
         if (this.remembered) {
           storage.set(

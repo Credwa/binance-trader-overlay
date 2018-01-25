@@ -49,39 +49,59 @@
             <div class="buy">
               <div style="display:flex; flex-direction: row; justify-content: space-between"><h4>Buy {{getCurrentCoin.name}}</h4> <p style="font-size:1em">{{'BTC'}} Balance: {{getBalanceMainCoin}}</p></div>
             <form>
-              <v-text-field v-if="tab === 'Limit'"
-                label="Limit"
-                type="number"
-                :suffix="'BTC'"
-                v-model ="buyPrice"
-                step="0.00000001"
-                min="0" max="9999999.99999999"
-              ></v-text-field>
-              <v-text-field v-if="tab === 'Market'"
-                label="Market"
-                type="number"
-                disabled
-                :suffix="'BTC'"
-                v-model ="getMarketPrice"
-              ></v-text-field>
-              <v-text-field v-if="tab === 'Stop-Limit'"
-                label="Stop"
-                type="number"
-                step="0.00000001"
-                min="0" max="9999999.99999999"
-                value="0.00000000"
-                :suffix="'BTC'"
-                v-model="stopBuy"
-              ></v-text-field>
-              <v-text-field v-if="tab === 'Stop-Limit'"
-                label="Limit"
-                type="number"
-                 step="0.00000001"
-                :suffix="'BTC'"
-                min="0" max="9999999.99999999"
-                value="0.00000000"
-                v-model="limitBuy"
-              ></v-text-field>
+              <div v-if="tab === 'Limit'">
+                <v-text-field
+                  label="Limit"
+                  type="number"
+                  :suffix="'BTC'"
+                  v-model ="buyPrice"
+                  step="0.00000001"
+                  min="0" max="9999999.99999999"
+                ></v-text-field>
+              </div>
+
+              <div v-if="tab === 'Market'">
+                <v-text-field
+                  label="Market"
+                  type="number"
+                  disabled
+                  :suffix="'BTC'"
+                  v-model ="getMarketPrice"
+                ></v-text-field>
+              </div>
+
+              <div v-if="tab === 'Stop-Limit'">
+                <v-text-field
+                  label="Stop"
+                  type="number"
+                  step="0.00000001"
+                  min="0" max="9999999.99999999"
+                  value="0.00000000"
+                  :suffix="'BTC'"
+                  v-model="stopBuy"
+                ></v-text-field>
+                <v-text-field
+                  label="Limit"
+                  type="number"
+                  step="0.00000001"
+                  :suffix="'BTC'"
+                  min="0" max="9999999.99999999"
+                  value="0.00000000"
+                  v-model="limitBuy"
+                ></v-text-field>
+              </div>
+
+              <div v-if="tab === 'Trailing-Stop'">
+                <!-- <v-text-field v-if="tab === 'Trailing-Stop'"
+                  label="Current Price"
+                  type="number"
+                  disabled
+                  :suffix="'BTC'"
+                  v-model ="getMarketPrice"
+                ></v-text-field> -->
+              </div>
+
+
               <v-text-field
                 label="Amount"
                 v-model="buyAmount"
@@ -97,48 +117,84 @@
               <div class="percentage-trade">
                 <v-btn  outline color="indigo" v-for="percent in buttonTradePercentages" :key="percent" @click="percentBuyAmount(percent/100)">{{percent}}%</v-btn>
               </div>
-
-
-
             </form>
               <v-btn class="green darken-2" style="color:#fff" @click="placeBuyOrder(tab)">Buy {{getCurrentCoin.name}}</v-btn>
             </div>
+
             <div class="sell">
               <div style="display:flex; flex-direction: row; justify-content: space-between"><h4>Sell {{getCurrentCoin.name}}</h4> <p style="font-size:1em">{{getCurrentCoin.name}} Balance: {{getCurrentCoin.amount}}</p></div>
               <form>
-                <v-text-field v-if="tab === 'Limit'"
-                  label="Limit"
-                  type="number"
-                  :suffix="'BTC'"
-                  v-model ="sellPrice"
-                  step="0.00000001"
-                  min="0" max="9999999.99999999"
-                ></v-text-field>
-                <v-text-field v-if="tab === 'Market'"
-                  label="Market"
-                  type="number"
-                  disabled
-                  :suffix="'BTC'"
-                  v-model ="getMarketPrice"
-                ></v-text-field>
-                <v-text-field v-if="tab === 'Stop-Limit'"
-                  label="Stop"
-                  type="number"
-                  :suffix="'BTC'"
-                  step="0.00000001"
-                  min="0" max="9999999.99999999"
-                  value="0.00000000"
-                  v-model="stopSell"
-                ></v-text-field>
-                <v-text-field v-if="tab === 'Stop-Limit'"
-                  label="Limit"
-                  type="number"
-                  :suffix="'BTC'"
-                  step="0.00000001"
-                  min="0" max="9999999.99999999"
-                  value="0.00000000"
-                  v-model="limitSell"
-                ></v-text-field>
+                <div v-if="tab === 'Limit'">
+                  <v-text-field
+                    label="Limit"
+                    type="number"
+                    :suffix="'BTC'"
+                    v-model ="sellPrice"
+                    step="0.00000001"
+                    min="0" max="9999999.99999999"
+                  ></v-text-field>
+                </div>
+
+                <div v-if="tab === 'Market'">
+                  <v-text-field
+                    label="Market"
+                    type="number"
+                    disabled
+                    :suffix="'BTC'"
+                    v-model ="getMarketPrice"
+                  ></v-text-field>
+                </div>
+
+                <div v-if="tab === 'Stop-Limit'">
+                  <v-text-field
+                    label="Stop"
+                    type="number"
+                    :suffix="'BTC'"
+                    step="0.00000001"
+                    min="0" max="9999999.99999999"
+                    value="0.00000000"
+                    v-model="stopSell"
+                  ></v-text-field>
+                  <v-text-field
+                    label="Limit"
+                    type="number"
+                    :suffix="'BTC'"
+                    step="0.00000001"
+                    min="0" max="9999999.99999999"
+                    value="0.00000000"
+                    v-model="limitSell"
+                  ></v-text-field>
+                </div>
+
+                <div v-if="tab === 'Trailing-Stop'">
+                  <v-text-field
+                    label="Current Price"
+                    type="number"
+                    disabled
+                    :suffix="'BTC'"
+                    v-model ="getMarketPrice"
+                  ></v-text-field>
+                  <v-text-field
+                    label="Stop Price"
+                    type="number"
+                    :suffix="'BTC'"
+                    step="0.00000001"
+                    min="0" max="9999999.99999999"
+                    required
+                    v-model="trailingSellStopPrice">
+                    </v-text-field>
+                  <v-text-field
+                    label="Trail Percentage"
+                    type="number"
+                    suffix="%"
+                    step="0.01"
+                    min="0" max="100.00"
+                    value="0.00"
+                    required
+                    v-model ="trailingSellPercentage"
+                  ></v-text-field>
+                </div>
+
                 <v-text-field
                   label="Amount"
                   v-model="sellAmount"
@@ -191,9 +247,12 @@ export default {
   },
   data() {
     return {
-      tabs: ['Limit', 'Market', 'Stop-Limit'],
+      tabs: ['Limit', 'Market', 'Stop-Limit', 'Trailing-Stop'],
       buyAmount: 0,
       sellAmount: 0,
+      trailingBuyPercentage: 0,
+      trailingSellPercentage: 5,
+      trailingSellStopPrice: 0,
       stopSell: parseFloat(0).toFixed(8),
       stopBuy: parseFloat(0).toFixed(8),
       limitSell: parseFloat(0).toFixed(8),
@@ -280,7 +339,6 @@ export default {
               self.snackbarError.text = resp.msg;
               self.snackbarError.status = true;
             } else {
-              console.log(resp);
               self.loading = false;
               self.complete = true;
               setTimeout(() => {
@@ -321,7 +379,6 @@ export default {
               self.snackbarError.text = resp.msg;
               self.snackbarError.status = true;
             } else {
-              console.log(resp);
               self.loading = false;
               self.complete = true;
               setTimeout(() => {
@@ -331,6 +388,8 @@ export default {
             }
           }
         );
+      } else if (type === 'Trailing-Stop') {
+        this.$socket.emit('trailing_buy', 'test');
       }
       setTimeout(() => {
         this.errorMessage = 'Failed to Buy';
@@ -350,7 +409,6 @@ export default {
               self.snackbarError.text = resp.msg;
               self.snackbarError.status = true;
             } else {
-              console.log(resp);
               self.loading = false;
               self.complete = true;
               setTimeout(() => {
@@ -371,7 +429,6 @@ export default {
               self.snackbarError.text = resp.msg;
               self.snackbarError.status = true;
             } else {
-              console.log(resp);
               self.loading = false;
               self.complete = true;
               setTimeout(() => {
@@ -392,13 +449,41 @@ export default {
               self.snackbarError.text = resp.msg;
               self.snackbarError.status = true;
             } else {
-              console.log(resp);
               self.loading = false;
               self.complete = true;
               setTimeout(() => {
                 self.complete = false;
               }, 3000);
               self.traded = resp;
+            }
+          }
+        );
+      } else if (type === 'Trailing-Stop') {
+        let data = {
+          APIKEY: this.getAPIKey,
+          APISECRET: this.getSecret,
+          initialPrice: this.getMarketPrice,
+          trailingSellStopPrice: this.trailingSellStopPrice,
+          amount: this.sellAmount,
+          trail: this.trailingSellPercentage
+        };
+        binance.sell(
+          this.getCurrentCoin.name + 'BTC',
+          this.sellAmount,
+          (this.getMarketPrice * 1500),
+          { stopPrice: this.getMarketPrice * 1000, type: 'TAKE_PROFIT_LIMIT' },
+          function(resp) {
+            if (resp.msg) {
+              self.snackbarError.text = resp.msg;
+              self.snackbarError.status = true;
+            } else {
+              self.loading = false;
+              self.complete = true;
+              setTimeout(() => {
+                self.complete = false;
+              }, 3000);
+              self.traded = resp;
+              self.$socket.emit('trailing_sell', {...data, ...resp});
             }
           }
         );
@@ -534,6 +619,9 @@ export default {
       this.buyPrice = this.getCurrentCoinPrice;
       this.sellPrice = this.getCurrentCoinPrice;
       return this.getCurrentCoinPrice;
+    },
+    calculatedInitialStopPrice() {
+      return (this.getMarketPrice * (1 - (this.trailingSellPercentage/100))).toFixed(8);
     }
   },
   created() {
