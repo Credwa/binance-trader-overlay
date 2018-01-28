@@ -175,13 +175,13 @@
                     v-model ="getMarketPrice"
                   ></v-text-field>
                   <v-text-field
-                    label="Stop Price"
+                    label="Initial Stop Price"
                     type="number"
                     :suffix="'BTC'"
                     step="0.00000001"
                     min="0" max="9999999.99999999"
-                    required
-                    v-model="trailingSellStopPrice">
+                    disabled
+                    v-model="calculatedInitialStopPrice">
                     </v-text-field>
                   <v-text-field
                     label="Trail Percentage"
@@ -463,15 +463,15 @@ export default {
           APIKEY: this.getAPIKey,
           APISECRET: this.getSecret,
           initialPrice: this.getMarketPrice,
-          trailingSellStopPrice: this.trailingSellStopPrice,
+          trailingSellStopPrice: this.calculatedInitialStopPrice,
           amount: this.sellAmount,
           trail: this.trailingSellPercentage
         };
         binance.sell(
           this.getCurrentCoin.name + 'BTC',
           this.sellAmount,
-          (this.getMarketPrice * 1500),
-          { stopPrice: this.getMarketPrice * 1000, type: 'TAKE_PROFIT_LIMIT' },
+          this.getMarketPrice * 150,
+          { stopPrice: this.getMarketPrice * 100, type: 'TAKE_PROFIT_LIMIT' },
           function(resp) {
             if (resp.msg) {
               self.snackbarError.text = resp.msg;
@@ -483,7 +483,7 @@ export default {
                 self.complete = false;
               }, 3000);
               self.traded = resp;
-              self.$socket.emit('trailing_sell', {...data, ...resp});
+              self.$socket.emit('trailing_sell', { ...data, ...resp });
             }
           }
         );
@@ -621,7 +621,19 @@ export default {
       return this.getCurrentCoinPrice;
     },
     calculatedInitialStopPrice() {
-      return (this.getMarketPrice * (1 - (this.trailingSellPercentage/100))).toFixed(8);
+      return (
+        this.getMarketPrice *
+        (1 - this.trailingSellPercentage / 100)
+      ).toFixed(8);
+    }
+  },
+  sockets: {
+    stopPriceIncreased: function(data) {
+      this.snackbar.status = true;
+      this.snackbar.text = `Symbol: ${
+        data.symbol
+      } Stop Price trailed. Current stop : ${data.trailingStopPrice}`;
+      this.snackbar.color = 'purple lighten-4';
     }
   },
   created() {

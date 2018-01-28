@@ -10,7 +10,7 @@
 
 <script>
 export default {
-  name: 'binance-trader-overlay'
+  name: 'binance-trader-overlay',
 };
 </script>
 
