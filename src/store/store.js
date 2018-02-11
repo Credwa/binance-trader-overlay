@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import moment from 'moment';
-import _ from 'lodash'
+import _ from 'lodash';
 Vue.use(Vuex);
 
 export const store = new Vuex.Store({
@@ -16,18 +16,23 @@ export const store = new Vuex.Store({
     },
     currentCoinPrice: 0,
     balanceMainCoin: 0,
-    orderCount: 0
+    orderCount: 0,
+    sessionStatus: false,
+    sessionStartingValue: 0
   },
   getters: {
     getAPIKey: state => state.APIKey,
     getSecret: state => state.secret,
     getPriceMainCoin: state => state.priceMainCoin,
     getBalanceMainCoin: state => state.balanceMainCoin,
-    getOrders: state => _.uniqBy(state.orders, (e) => {
-      return e.orderId
-    }),
+    getOrders: state =>
+      _.uniqBy(state.orders, e => {
+        return e.orderId;
+      }),
     getCurrentCoin: state => state.currentCoin,
-    getCurrentCoinPrice: state => state.currentCoinPrice
+    getCurrentCoinPrice: state => state.currentCoinPrice,
+    getSessionStartingValue: state => state.sessionStartingValue,
+    getSessionStatus: state => state.sessionStatus
   },
   mutations: {
     setAPIKey: (state, key) => {
@@ -35,6 +40,13 @@ export const store = new Vuex.Store({
     },
     setSecret: (state, secret) => {
       state.secret = secret;
+    },
+    setSessionStartingValue: (state, value) => {
+      state.sessionStartingValue = value;
+      console.log(state.sessionStartingValue);
+    },
+    toggleSessionStatus: state => {
+      state.sessionStatus = !state.sessionStatus;
     },
     incrementOrderCount: state => {
       state.orderCount++;

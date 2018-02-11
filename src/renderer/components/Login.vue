@@ -93,11 +93,11 @@ export default {
     updateWindow() {
       let loginWindow = this.$electron.remote.getCurrentWindow();
       let screenSize = this.$electron.screen.getPrimaryDisplay().size;
-      let newWindowWidth = Math.floor(screenSize.width/4.5);
-      let newWindowHeight = Math.floor(screenSize.height/1.5);
+      let newWindowWidth = Math.floor(screenSize.width / 4.35);
+      let newWindowHeight = Math.floor(screenSize.height / 1.2);
       loginWindow.setAlwaysOnTop(true);
       loginWindow.setPosition(
-        screenSize.width - newWindowWidth,
+        screenSize.width - 15 - newWindowWidth,
         screenSize.height - newWindowHeight - 100
       );
       loginWindow.setSize(newWindowWidth, newWindowHeight);
@@ -110,13 +110,19 @@ export default {
   created() {
     let self = this;
     storage.has('saved-login', (error, hasKey) => {
+      if (error) {
+        console.log(error);
+      }
       if (hasKey) {
         storage.get('saved-login', function(error, data) {
           if (error) return;
           self.savedDataLoaded = true;
           self.apiKey = data.apiKey;
           self.secret = data.secret;
+          console.log('key found');
         });
+      } else {
+        console.log('key not found');
       }
     });
   }
@@ -141,6 +147,6 @@ export default {
 }
 
 .test::selection {
-  background-color:red;
+  background-color: red;
 }
 </style>

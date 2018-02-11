@@ -55,18 +55,18 @@
     </div>
     <div class="infos">
     <div class="day-trading">
-      <div>Starting Value: <v-chip color="yellow darken-1" v-if="!switchUSD">{{startingValue.toFixed(8)}} {{mainCoin}}</v-chip><v-chip v-if="switchUSD" color="green">${{(priceMainCoin * startingValue).toFixed(2)}}</v-chip>
+      <div>Starting Value: <v-chip color="yellow darken-1" v-if="!switchUSD">{{getSessionStartingValue.toFixed(8)}} {{mainCoin}}</v-chip><v-chip v-if="switchUSD" color="green">${{(priceMainCoin * getSessionStartingValue).toFixed(2)}}</v-chip>
       </div>
       <div>Current Value: <v-chip v-if="!switchUSD" color="yellow darken-1">{{estimatedTotalPrice.toFixed(8)}} {{mainCoin}}</v-chip><v-chip v-if="switchUSD" color="green">${{(priceMainCoin * estimatedTotalPrice).toFixed(2)}}</v-chip></div>
 
       <div >Gain/Loss:
-        <span v-if="!switchUSD && startingValue > 0" :style="(estimatedTotalPrice - startingValue) >= 0 ? 'color: #4caf50' :  'color: #ef5350'">{{(estimatedTotalPrice - startingValue).toFixed(8)}}({{(((estimatedTotalPrice - startingValue)/startingValue )* 100).toFixed(3)}}%)</span>
+        <span v-if="!switchUSD && getSessionStartingValue > 0" :style="(estimatedTotalPrice - getSessionStartingValue) >= 0 ? 'color: #4caf50' :  'color: #ef5350'">{{(estimatedTotalPrice - getSessionStartingValue).toFixed(8)}}({{(((estimatedTotalPrice - getSessionStartingValue)/getSessionStartingValue )* 100).toFixed(3)}}%)</span>
 
-        <span v-if="switchUSD && startingValue > 0" :style="(estimatedTotalPrice - startingValue) >= 0 ? 'color: #4caf50' :  'color: #ef5350'">${{((estimatedTotalPrice - startingValue) * priceMainCoin).toFixed(2)}}({{(((estimatedTotalPrice - startingValue)/startingValue )* 100).toFixed(3)}}%)</span>
+        <span v-if="switchUSD && getSessionStartingValue > 0" :style="(estimatedTotalPrice - getSessionStartingValue) >= 0 ? 'color: #4caf50' :  'color: #ef5350'">${{((estimatedTotalPrice - getSessionStartingValue) * priceMainCoin).toFixed(2)}}({{(((estimatedTotalPrice - getSessionStartingValue)/getSessionStartingValue )* 100).toFixed(3)}}%)</span>
 
-        <span v-if="startingValue === 0">0(0.000%)</span>
+        <span v-if="getSessionStartingValue === 0">0(0.000%)</span>
       </div>
-      <v-btn :color="sessionStatus" @click="sessionStart">{{sessionData}}</v-btn>
+      <v-btn :color="getSessionData.status" @click="sessionStart">{{getSessionData.data}}</v-btn>
     </div>
       <v-snackbar
       :timeout="snackbar.timeout"
@@ -79,6 +79,7 @@
     </v-snackbar>
     </div>
     <v-btn color="blue" outline style="width:95%" @click="openOrders">orders</v-btn>
+    <trades :currentCoin="currentCoin"> </trades>
   </div>
   </div>
   <div v-if="loadingData" style="display:flex; justify-content:center; align-items:center; align-content:center"><v-progress-circular indeterminate v-bind:size="120" v-bind:width="7" color="blue"></v-progress-circular></div>
@@ -89,11 +90,13 @@
 const binance = require('node-binance-api');
 import Orders from './Order';
 import { mapMutations, mapGetters } from 'vuex';
+import Trades from './trade/Trades.vue';
 let tradeSymbols = {};
 export default {
   name: 'main-menu',
   components: {
-    Orders
+    Orders,
+    Trades
   },
   data() {
     return {
@@ -128,7 +131,7 @@ export default {
       balance: 0,
       priceTicker: null,
       orders: [],
-      tradeSymbols: {},
+      tradeSymbols: {}
     };
   },
   methods: {
@@ -141,6 +144,9 @@ export default {
       'setCurrentCoin',
       'setCurrentCoinPrice',
       'setBalanceMainCoin',
+      ,
+      'toggleSessionStatus',
+      'setSessionStartingValue',
       'incrementOrderCount'
     ]),
     openTrade() {
@@ -174,13 +180,13 @@ export default {
       this.incrementOrderCount();
     },
     sessionStart() {
-      this.sessionInProgress = !this.sessionInProgress;
-      if (this.sessionInProgress) {
-        this.startingValue = this.estimatedTotalPrice;
+      this.toggleSessionStatus();
+      if (this.getSessionStatus) {
+        this.setSessionStartingValue(this.estimatedTotalPrice);
         this.sessionStatus = 'red darken-5';
         this.sessionData = 'End Session';
       } else {
-        this.startingValue = 0;
+        this.setSessionStartingValue(0);
         this.sessionStatus = 'green darken-5';
         this.sessionData = 'Start Session';
       }
@@ -412,7 +418,26 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['getAPIKey', 'getSecret', 'getCurrentCoin']),
+    ...mapGetters([
+      'getAPIKey',
+      'getSecret',
+      'getCurrentCoin',
+      'getSessionStartingValue',
+      'getSessionStatus'
+    ]),
+    getSessionData() {
+      if (this.getSessionStatus) {
+        return {
+          data: 'End Session',
+          status: 'red lighten-6'
+        };
+      } else {
+        return {
+          data: 'Start Session',
+          status: 'green lighten-6'
+        };
+      }
+    },
     balancesFilter() {
       let tempBalances = [];
       let reg = new RegExp(`${this.search.toUpperCase()}`);
