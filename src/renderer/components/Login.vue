@@ -44,6 +44,7 @@
 <script>
 const binance = require('node-binance-api');
 import { mapMutations, mapGetters } from 'vuex';
+import { setTimeout } from 'timers';
 const storage = require('electron-json-storage');
 const defaultDataPath = storage.getDefaultDataPath();
 
@@ -65,6 +66,7 @@ export default {
   methods: {
     ...mapMutations(['setAPIKey', 'setSecret']),
     login() {
+      console.log('login');
       this.loading = true;
       binance.options({
         APIKEY: this.apiKey.trim(),
@@ -73,6 +75,7 @@ export default {
       });
       binance.balance((balances, error) => {
         // save login info if remembered
+        console.log(balances);
         if (this.remembered) {
           storage.set(
             'saved-login',
@@ -89,6 +92,11 @@ export default {
         this.$router.push('main');
         this.updateWindow();
       });
+      setTimeout(() => {
+        if (this.loading) {
+          this.loading = false;
+        }
+      }, 5000);
     },
     updateWindow() {
       let loginWindow = this.$electron.remote.getCurrentWindow();

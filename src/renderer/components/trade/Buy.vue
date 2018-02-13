@@ -89,7 +89,7 @@
                 :suffix="currentCoin.name"
               ></v-text-field>
             </form>
-            <v-btn class="green darken-2" style="color:#fff" @click="placeBuyOrder(tab)">Buy {{getCurrentCoin.name}}</v-btn>
+            <v-btn class="green darken-2" style="color:#fff" @click="placeBuyOrder(tab)">Buy {{currentCoin.name}}</v-btn>
           </div>
         </v-card>
       </v-tabs-content>

@@ -100,33 +100,49 @@
                   v-model="currentCoin.price"
                   disabled
                 ></v-text-field>
-                <p class="body-1">Trailing Stop Percentage Select:</p>
+                <p class="body-1">Set Risk Tolerance:</p>
                 <v-radio-group v-model="row" row>
                   <v-radio label="1%" value="radio-1" v-model="trailPerc.one"></v-radio>
                   <v-radio label="2%" value="radio-2"  v-model="trailPerc.two"></v-radio>
                   <v-radio label="Custom Trail" value="radio-3"  v-model="trailPerc.custom"></v-radio>
                 </v-radio-group>
                 <v-text-field
-                v-if="row === 'custom'"
+                class="customTrail"
+                v-if="row === 'customVal'"
                   label="Percent"
                   type="number"
                   step="0.1"
                   min="0" max="10"
                   value="0.0"
                   :suffix="'%'"
-                  v-model="customTrailPerc"
+                  v-model="trailPerc.customVal"
                 ></v-text-field>
 
-                <v-checkbox label="Subscribe to Eliot-Order updates for this coin" v-model="emailSub" light></v-checkbox>
+                <v-checkbox label="Gain % Protrection" v-model="gainPercProtection" light ></v-checkbox>
+                <v-text-field class="customTrail"
+                style="min-width:65%"
+                v-if="gainPercProtection"
+                  step="0.1"
+                  min="0" max="10"
+                  value="0.0"
+                  :suffix="'%'"
+                  label="Gain Protection Percent"
+                  type="numberl"
+                  v-model="gainPercentProtection"
+                ></v-text-field>
+
+                <v-checkbox label="Subscribe to Eliot-Order updates for this coin" v-model="emailSub" light disabled></v-checkbox>
                 <v-text-field
                 v-if="emailSub"
                   label="Email"
                   type="email"
+                  v-model="email"
                 ></v-text-field>
               </div>
 
             </form>
-            <v-btn class="red" style="color:#fff" @click="placesellOrder(tab)">sell {{getCurrentCoin.name}}</v-btn>
+            <v-btn class="red" @click="placesellOrder(tab)"> <span v-if="current_key !== 'Eliot-Order'">Sell {{currentCoin.name}}</span> <Span v-else>Set Eliot Order {{currentCoin.name}}</Span></v-btn>
+            <v-btn v-if="current_key === 'Eliot-Order'" class="blue" disabled @click="">View Eliot Order for {{currentCoin.name}}</v-btn>
           </div>
         </v-card>
       </v-tabs-content>
@@ -143,14 +159,17 @@ export default {
   props: ['currentCoin'],
   data() {
     return {
+      gainPercProtection: false,
+      gainPercentProtection: 0,
       emailSub: false,
-      row: null,
+      row: 1,
       trailPerc: {
         one: 1,
         two: 2,
-        custom: 'custom'
+        custom: 'customVal',
+        customVal: 3
       },
-      customTrailPerc: 3,
+      email: null,
       current_key: 'Limit',
       items: ['Limit', 'Market', 'Stop-Limit', 'Eliot-Order'],
       sellAmount: 0,
@@ -184,7 +203,10 @@ export default {
         } else {
           this.sellAmount = (this.optTrade / this.sellPrice).toFixed(8);
         }
-      } else if (this.current_key === 'Market' || this.current_key === 'Eliot-Order') {
+      } else if (
+        this.current_key === 'Market' ||
+        this.current_key === 'Eliot-Order'
+      ) {
         this.sellAmount = (this.optTrade / this.currentCoin.price).toFixed(8);
       } else if (this.current_key === 'Stop-Limit' && this.limitSell) {
         if (Number(newVal) > Number(this.currentCoin.amount * this.limitSell)) {
@@ -200,7 +222,10 @@ export default {
       } else {
         if (this.current_key === 'Limit' && this.sellPrice > 0) {
           this.optTrade = (this.sellAmount * this.sellPrice).toFixed(8);
-        } else if (this.current_key === 'Market' || this.current_key === 'Eliot-Order') {
+        } else if (
+          this.current_key === 'Market' ||
+          this.current_key === 'Eliot-Order'
+        ) {
           this.optTrade = (this.sellAmount * this.currentCoin.price).toFixed(8);
         } else if (this.current_key === 'Stop-Limit' && this.limitSell) {
           this.optTrade = (this.sellAmount * this.limitSell).toFixed(8);
@@ -293,31 +318,14 @@ export default {
         let data = {
           APIKEY: this.getAPIKey,
           APISECRET: this.getSecret,
-          initialPrice: this.getMarketPrice,
+          initialPrice: this.currentCoin.price,
           trailingSellStopPrice: this.calculatedInitialStopPrice,
           amount: this.sellAmount,
-          trail: this.trailingSellPercentage
+          symbol: this.currentCoin.name,
+          trail: this.row === 'customVal' ? this.trailPerc.customVal : this.row,
+          gainProtection: this.gainPercentProtection
         };
-        binance.sell(
-          this.currentCoin.name + 'BTC',
-          this.sellAmount,
-          this.getMarketPrice * 150,
-          { stopPrice: this.getMarketPrice * 100, type: 'TAKE_PROFIT_LIMIT' },
-          function(resp) {
-            if (resp.msg) {
-              self.snackbarError.text = resp.msg;
-              self.snackbarError.status = true;
-            } else {
-              self.loading = false;
-              self.complete = true;
-              setTimeout(() => {
-                self.complete = false;
-              }, 3000);
-              self.traded = resp;
-              self.$socket.emit('trailing_sell', { ...data, ...resp });
-            }
-          }
-        );
+        self.$socket.emit('trailing_sell', data);
       }
       setTimeout(() => {
         this.errorMessage = 'Failed to sell';
@@ -336,15 +344,19 @@ export default {
       'getPriceMainCoin'
     ]),
     calculatedInitialStopPrice() {
-      return (
-        this.currentCoin.price *
-        (1 - this.trailingSellPercentage / 100)
-      ).toFixed(8);
+      let trail = 0;
+      if (this.row === 'customVal') {
+        trail = this.trailPerc.customVal;
+      } else {
+        trail = this.row;
+      }
+      return (this.currentCoin.price * (1 - trail / 100)).toFixed(8);
     }
   },
   created() {
     this.sellPrice = this.currentCoin.price;
     this.limitSell = this.currentCoin.price;
+    this.$socket.emit('user_connected', { apiKey: this.getAPIKey, secret: this.getSecret});
   }
 };
 </script>
@@ -360,6 +372,11 @@ export default {
   flex-direction: column;
   width: 100%;
   padding: 1em;
+}
+
+.customTrail {
+  max-width: 25%;
+  margin: auto;
 }
 </style>
 

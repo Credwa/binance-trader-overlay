@@ -32,12 +32,12 @@
                 ></v-text-field>
                 </v-list-tile>
               <v-list-tile :disabled="key === mainCoin" v-for="(balance,key) in balances" :key="key" @click="
-              if (key !== mainCoin)changeCurrentCoin(key, balance.available)" v-if="balance.available > 0 && search.length === 0">
+              if (key !== mainCoin)changeCurrentCoin(key, balance.available)" v-if="search.length === 0">
                 <v-list-tile-title>{{key}}: {{balance.available}}</v-list-tile-title>
               </v-list-tile>
 
               <v-list-tile :disabled="balance.symbol === mainCoin" v-for="(balance,index) in balancesFilter" :key="index" @click="
-              if (balance.symbol !== mainCoin)changeCurrentCoin(balance.symbol, balance.available)" v-if="balance.available > 0 && search.length > 0">
+              if (balance.symbol !== mainCoin)changeCurrentCoin(balance.symbol, balance.available)" v-if="search.length > 0">
                 <v-list-tile-title>{{balance.symbol}}: {{balance.available}}</v-list-tile-title>
               </v-list-tile>
             </v-list>
@@ -127,7 +127,7 @@ export default {
       apiKeyRules: [v => !!v || 'API Key is required'],
       secret: '',
       secretRules: [v => !!v || 'Secret is required'],
-      balances: null,
+      balances: {},
       balance: 0,
       priceTicker: null,
       orders: [],
@@ -222,6 +222,10 @@ export default {
           }
         );
       }
+
+      setTimeout(() => {
+        self.loadingData = false;
+      }, 2000);
     },
     storeOrders(coin) {
       let self = this;
@@ -253,7 +257,7 @@ export default {
             if (balance === self.mainCoin) {
               self.setBalanceMainCoin(balances[balance].available);
             }
-            if (balances[balance].available > 0) {
+            if (balances[balance].available) {
               if (balance !== 'GAS' && balance !== 'ETF') {
                 // temp solution
                 self.storeOrders(balance);
@@ -265,7 +269,18 @@ export default {
             }
           }
         }
-        self.balances = balances;
+        let sortedKeys = Object.keys(balances).sort((a, b) => {
+          return balances[b].available - balances[a].available;
+        });
+        console.log(self.balances);
+        console.log(sortedKeys.length);
+        sortedKeys.forEach(key => {
+          if (key === '123' || key === '456') {
+          } else {
+            self.$set(self.balances, key, balances[key]);
+          }
+        });
+        // console.log(balances);
 
         // set default current coin to coin with greatest balance
         if (newBalances[0].name === self.mainCoin && newBalances.length > 1) {
@@ -285,6 +300,9 @@ export default {
             self.loadingData = false;
           }
         );
+        setTimeout(() => {
+          self.loadingData = false;
+        }, 1000);
       });
     },
     toggleMainCoin(newCoin) {
@@ -443,7 +461,7 @@ export default {
       let reg = new RegExp(`${this.search.toUpperCase()}`);
       for (let balance in this.balances) {
         if (this.balances.hasOwnProperty(balance)) {
-          if (this.balances[balance].available > 0) {
+          if (this.balances[balance].available) {
             tempBalances.push({
               symbol: balance,
               available: this.balances[balance].available
