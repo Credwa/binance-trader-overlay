@@ -158,6 +158,7 @@
                 ></v-text-field>
 
                 <v-checkbox label="Subscribe to Eliot-Order updates for this coin" v-model="emailSub" light></v-checkbox>
+                <p v-if="emailSub" style="color:red">Check spam for updates!*</p>
                 <v-text-field
                 v-if="emailSub"
                   label="Email"
