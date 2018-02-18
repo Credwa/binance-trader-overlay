@@ -42,7 +42,6 @@
               </v-list-tile>
             </v-list>
           </v-menu>
-          <v-btn color="blue lighten-6" flat outline @click="openTrade" :disabled="currentCoin.name === 'BTC'">Trade</v-btn>
         </div>
       </div>
 
@@ -149,6 +148,7 @@ export default {
       'setSessionStartingValue',
       'incrementOrderCount'
     ]),
+    // deprecate next
     openTrade() {
       let window = this.$electron.remote.getCurrentWindow();
       let screenSize = this.$electron.screen.getPrimaryDisplay().size;
@@ -272,8 +272,6 @@ export default {
         let sortedKeys = Object.keys(balances).sort((a, b) => {
           return balances[b].available - balances[a].available;
         });
-        console.log(self.balances);
-        console.log(sortedKeys.length);
         sortedKeys.forEach(key => {
           if (key === '123' || key === '456') {
           } else {
@@ -284,11 +282,11 @@ export default {
 
         // set default current coin to coin with greatest balance
         if (newBalances[0].name === self.mainCoin && newBalances.length > 1) {
-          self.currentCoin.name = newBalances[1].name;
-          self.currentCoin.amount = newBalances[1].amount;
+          self.currentCoin.name = sortedKeys[1];
+          self.currentCoin.amount = balances[sortedKeys[1]].available;
         } else {
-          self.currentCoin.name = newBalances[0].name;
-          self.currentCoin.amount = newBalances[0].amount;
+          self.currentCoin.name = sortedKeys[0];
+          self.currentCoin.amount = balances[sortedKeys[0]].available;
         }
 
         // subscribe to current coin to get data
@@ -341,11 +339,8 @@ export default {
         if (asset === this.mainCoin) {
           this.setBalanceMainCoin(this.balances[asset].available);
         }
-        if (asset === this.getCurrentCoin.name) {
-          this.setCurrentCoin({
-            name: asset,
-            amount: this.balances[asset].available
-          });
+        if (asset === this.currentCoin.name) {
+          this.currentCoin.amount = available;
         }
       }
     },

@@ -100,12 +100,38 @@
                   v-model="currentCoin.price"
                   disabled
                 ></v-text-field>
+                <p class="body-1">Pre buy then set eliot order:</p>
+                <v-radio-group v-model="buyRow" row>
+                  <v-radio label="Off" value="radio-off" v-model="preBuy.off"></v-radio>
+                  <v-radio label="Market" value="radio-market"  v-model="preBuy.market"></v-radio>
+                  <v-radio label="Limit" value="radio-limit"  v-model="preBuy.limit"></v-radio>
+                </v-radio-group>
+                <v-text-field
+                v-if="buyRow === 3"
+                  :label="'Price per ' + currentCoin.name"
+                  type="number"
+                  :suffix="'BTC'"
+                  v-model ="preOrderLimitBuyPrice"
+                  step="0.00000001"
+                  min="0" max="9999999.99999999"
+                ></v-text-field>
+                <v-text-field
+                v-if="buyRow === 2 || buyRow === 3"
+                  :label="`Amount of ${currentCoin.name} to Buy`"
+                  type="number"
+                  :suffix="currentCoin.name"
+                  v-model="preOrderAmt"
+                  step="1"
+                  min="0" max="9999999.99999999"
+              ></v-text-field>
+
                 <p class="body-1">Set Risk Tolerance:</p>
                 <v-radio-group v-model="row" row>
                   <v-radio label="1%" value="radio-1" v-model="trailPerc.one"></v-radio>
                   <v-radio label="2%" value="radio-2"  v-model="trailPerc.two"></v-radio>
                   <v-radio label="Custom Trail" value="radio-3"  v-model="trailPerc.custom"></v-radio>
                 </v-radio-group>
+
                 <v-text-field
                 class="customTrail"
                 v-if="row === 'customVal'"
@@ -118,7 +144,7 @@
                   v-model="trailPerc.customVal"
                 ></v-text-field>
 
-                <v-checkbox label="Gain % Protrection" v-model="gainPercProtection" light ></v-checkbox>
+                <v-checkbox label="Gain % Protection" v-model="gainPercProtection" light ></v-checkbox>
                 <v-text-field class="customTrail"
                 style="min-width:65%"
                 v-if="gainPercProtection"
@@ -131,7 +157,7 @@
                   v-model="gainPercentProtection"
                 ></v-text-field>
 
-                <v-checkbox label="Subscribe to Eliot-Order updates for this coin" v-model="emailSub" light disabled></v-checkbox>
+                <v-checkbox label="Subscribe to Eliot-Order updates for this coin" v-model="emailSub" light></v-checkbox>
                 <v-text-field
                 v-if="emailSub"
                   label="Email"
@@ -162,14 +188,24 @@ export default {
       gainPercProtection: false,
       gainPercentProtection: 0,
       emailSub: false,
+      email: null,
+      buyRow: 1,
+      preBuy: {
+        off: 1,
+        market: 2,
+        limit: 3,
+      },
+      preOrderAmt: 0,
+      preOrderLimitBuyPrice: 0,
       row: 1,
+      preLimitBuy: false,
+      preMarketBuy: false,
       trailPerc: {
         one: 1,
         two: 2,
         custom: 'customVal',
         customVal: 3
       },
-      email: null,
       current_key: 'Limit',
       items: ['Limit', 'Market', 'Stop-Limit', 'Eliot-Order'],
       sellAmount: 0,
@@ -257,7 +293,7 @@ export default {
       this.loading = true;
       let self = this;
       if (type === 'Market') {
-        binance.marketsell(
+        binance.marketSell(
           this.currentCoin.name + 'BTC',
           this.sellAmount,
           function(resp) {
@@ -323,7 +359,9 @@ export default {
           amount: this.sellAmount,
           symbol: this.currentCoin.name,
           trail: this.row === 'customVal' ? this.trailPerc.customVal : this.row,
-          gainProtection: this.gainPercentProtection
+          gainProtection: this.gainPercentProtection,
+          email: this.email,
+          preBuy: this.buyRow === 1 ? null : (this.preOrderAmt > 0 ? {amount: this.preOrderAmt, price: this.preOrderLimitBuyPrice} : null)
         };
         self.$socket.emit('trailing_sell', data);
       }
@@ -356,7 +394,10 @@ export default {
   created() {
     this.sellPrice = this.currentCoin.price;
     this.limitSell = this.currentCoin.price;
-    this.$socket.emit('user_connected', { apiKey: this.getAPIKey, secret: this.getSecret});
+    this.$socket.emit('user_connected', {
+      apiKey: this.getAPIKey,
+      secret: this.getSecret
+    });
   }
 };
 </script>
