@@ -169,18 +169,7 @@ export default {
       'setCurrentCoin'
     ]),
     goBack() {
-      let loginWindow = this.$electron.remote.getCurrentWindow();
-      let screenSize = this.$electron.screen.getPrimaryDisplay().size;
-      let newWindowWidth = Math.floor(screenSize.width / 4.5);
-      let newWindowHeight = Math.floor(screenSize.height / 1.5);
-      loginWindow.setAlwaysOnTop(true);
-      loginWindow.setPosition(
-        screenSize.width - newWindowWidth,
-        screenSize.height - newWindowHeight - 100
-      );
-      loginWindow.setSize(newWindowWidth, newWindowHeight);
       window.history.go(-1);
-      console.log(binance.websockets.subscriptions());
     },
     hideMenu() {
       let currWindow = this.$electron.remote.getCurrentWindow();

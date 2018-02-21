@@ -169,7 +169,7 @@
 
             </form>
             <v-btn class="red" @click="placesellOrder(tab)"> <span v-if="current_key !== 'Eliot-Order'">Sell {{currentCoin.name}}</span> <Span v-else>Set Eliot Order {{currentCoin.name}}</Span></v-btn>
-            <v-btn v-if="current_key === 'Eliot-Order'" class="blue" disabled @click="">View Eliot Order for {{currentCoin.name}}</v-btn>
+            <v-btn v-if="current_key === 'Eliot-Order'" class="blue" @click="viewEliotOrders" >View Eliot Orders</v-btn>
           </div>
         </v-card>
       </v-tabs-content>
@@ -194,7 +194,7 @@ export default {
       preBuy: {
         off: 1,
         market: 2,
-        limit: 3,
+        limit: 3
       },
       preOrderAmt: 0,
       preOrderLimitBuyPrice: 0,
@@ -290,6 +290,19 @@ export default {
       'setCurrentCoinPrice',
       'setBalanceMainCoin'
     ]),
+    viewEliotOrders() {
+      // let loginWindow = this.$electron.remote.getCurrentWindow();
+      // let screenSize = this.$electron.screen.getPrimaryDisplay().size;
+      // let newWindowWidth = Math.floor(screenSize.width / 4.35);
+      // let newWindowHeight = Math.floor(screenSize.height / 1.2);
+      // loginWindow.setAlwaysOnTop(true);
+      // loginWindow.setPosition(
+      //   screenSize.width - 15 - newWindowWidth,
+      //   screenSize.height - newWindowHeight - 100
+      // );
+      // loginWindow.setSize(newWindowWidth, newWindowHeight);
+      this.$router.push('active-eliot-orders');
+    },
     placesellOrder(type) {
       this.loading = true;
       let self = this;
@@ -362,7 +375,15 @@ export default {
           trail: this.row === 'customVal' ? this.trailPerc.customVal : this.row,
           gainProtection: this.gainPercentProtection,
           email: this.email,
-          preBuy: this.buyRow === 1 ? null : (this.preOrderAmt > 0 ? {amount: this.preOrderAmt, price: this.preOrderLimitBuyPrice} : null)
+          preBuy:
+            this.buyRow === 1
+              ? null
+              : this.preOrderAmt > 0
+                ? {
+                    amount: this.preOrderAmt,
+                    price: this.preOrderLimitBuyPrice
+                  }
+                : null
         };
         self.$socket.emit('trailing_sell', data);
       }
@@ -395,10 +416,6 @@ export default {
   created() {
     this.sellPrice = this.currentCoin.price;
     this.limitSell = this.currentCoin.price;
-    this.$socket.emit('user_connected', {
-      apiKey: this.getAPIKey,
-      secret: this.getSecret
-    });
   }
 };
 </script>
