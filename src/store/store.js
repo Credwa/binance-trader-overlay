@@ -9,6 +9,7 @@ export const store = new Vuex.Store({
     APIKey: null,
     secret: null,
     priceMainCoin: 0,
+    eliotOrders: {},
     orders: [],
     currentCoin: {
       name: '',
@@ -32,7 +33,8 @@ export const store = new Vuex.Store({
     getCurrentCoin: state => state.currentCoin,
     getCurrentCoinPrice: state => state.currentCoinPrice,
     getSessionStartingValue: state => state.sessionStartingValue,
-    getSessionStatus: state => state.sessionStatus
+    getSessionStatus: state => state.sessionStatus,
+    getEliotOrders: state => state.eliotOrders,
   },
   mutations: {
     setAPIKey: (state, key) => {
@@ -43,7 +45,6 @@ export const store = new Vuex.Store({
     },
     setSessionStartingValue: (state, value) => {
       state.sessionStartingValue = value;
-      console.log(state.sessionStartingValue);
     },
     toggleSessionStatus: state => {
       state.sessionStatus = !state.sessionStatus;
@@ -97,6 +98,9 @@ export const store = new Vuex.Store({
       state.orders = state.orders.filter(element => {
         return element.orderId !== orderId;
       });
+    },
+    setEliotOrders: (state, eliotOrders) => {
+      state.eliotOrders = eliotOrders;
     }
   },
   actions: {}

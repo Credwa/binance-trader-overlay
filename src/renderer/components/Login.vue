@@ -127,10 +127,8 @@ export default {
           self.savedDataLoaded = true;
           self.apiKey = data.apiKey;
           self.secret = data.secret;
-          console.log('key found');
         });
       } else {
-        console.log('key not found');
       }
     });
   }

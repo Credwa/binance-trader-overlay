@@ -6,7 +6,7 @@
 
       <v-icon dark large class="remove" @click="hideMenu">remove</v-icon>
     </div>
-    <div v-if="!loadingData">
+    <div>
     <div class="top-details">
           <div style="margin-left:5%"><h4>{{currentCoin.name + '/' + mainCoin}} 24hr <span v-if="parseFloat(currentCoin.percentChange) > 0" style="color: #4caf50">+{{currentCoin.percentChange}}%</span>
           <span v-if="parseFloat(currentCoin.percentChange) < 0" style="color:#ef5350">{{currentCoin.percentChange}}%</span>
@@ -81,7 +81,6 @@
     <trades :currentCoin="currentCoin"> </trades>
   </div>
   </div>
-  <div v-if="loadingData" style="display:flex; justify-content:center; align-items:center; align-content:center"><v-progress-circular indeterminate v-bind:size="120" v-bind:width="7" color="blue"></v-progress-circular></div>
 </div>
 </template>
 
@@ -143,7 +142,6 @@ export default {
       'setCurrentCoin',
       'setCurrentCoinPrice',
       'setBalanceMainCoin',
-      ,
       'toggleSessionStatus',
       'setSessionStartingValue',
       'incrementOrderCount'
@@ -167,15 +165,6 @@ export default {
       this.$router.push('trade');
     },
     openOrders() {
-      let window = this.$electron.remote.getCurrentWindow();
-      let screenSize = this.$electron.screen.getPrimaryDisplay().size;
-      let newWindowWidth = Math.floor(screenSize.width / 1.3);
-      let newWindowHeight = Math.floor(screenSize.height / 2);
-      window.setPosition(
-        screenSize.width - newWindowWidth,
-        screenSize.height - newWindowHeight - 100
-      );
-      window.setSize(newWindowWidth, newWindowHeight);
       this.$router.push('orders');
       this.incrementOrderCount();
     },

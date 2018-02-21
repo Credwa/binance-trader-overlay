@@ -26,6 +26,7 @@
 </template>
 
 <script>
+import { mapMutations } from 'vuex';
 import Buy from './Buy.vue';
 import Sell from './Sell.vue';
 export default {
@@ -36,8 +37,18 @@ export default {
   },
   data() {
     return {
-      items: ['BUY', 'SELL'],
+      items: ['BUY', 'SELL']
     };
+  },
+  methods: {
+    ...mapMutations([
+      'setEliotOrders'
+    ]),
+  },
+  sockets: {
+    active_orders: function(data) {
+      this.setEliotOrders(data);
+    }
   }
 };
 </script>

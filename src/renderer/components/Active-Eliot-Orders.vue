@@ -7,7 +7,7 @@
           <v-spacer></v-spacer>
           <v-icon dark large style="cursor:pointer" class="remove" @click="hideMenu">remove</v-icon>
         </div>
-    <eliot-order v-for="order in activeOrders" :eliotOrder="order" :key="order.key"> </eliot-order>
+    <eliot-order v-for="order in getEliotOrders" :eliotOrder="order" :key="order.key"> </eliot-order>
   </div>
 </template>
 
@@ -25,6 +25,7 @@ export default {
   },
   sockets: {
     active_orders: function(data) {
+      console.log(data);
       this.activeOrders = data;
     }
   },
@@ -47,19 +48,17 @@ export default {
       window.history.go(-1);
     }
   },
-  created() {
-    this.$socket.emit('user_connected', {
-      apiKey: this.getAPIKey,
-      secret: this.getSecret
-    });
-  }
+  computed: {
+    ...mapGetters(['getEliotOrders'])
+  },
+  created() {}
 };
 </script>
 
 <style>
 .eliotOrders {
   background-color: black;
-  display:flex;
+  display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-content: space-between;

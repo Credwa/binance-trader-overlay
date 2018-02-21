@@ -291,16 +291,6 @@ export default {
       'setBalanceMainCoin'
     ]),
     viewEliotOrders() {
-      // let loginWindow = this.$electron.remote.getCurrentWindow();
-      // let screenSize = this.$electron.screen.getPrimaryDisplay().size;
-      // let newWindowWidth = Math.floor(screenSize.width / 4.35);
-      // let newWindowHeight = Math.floor(screenSize.height / 1.2);
-      // loginWindow.setAlwaysOnTop(true);
-      // loginWindow.setPosition(
-      //   screenSize.width - 15 - newWindowWidth,
-      //   screenSize.height - newWindowHeight - 100
-      // );
-      // loginWindow.setSize(newWindowWidth, newWindowHeight);
       this.$router.push('active-eliot-orders');
     },
     placesellOrder(type) {
@@ -416,6 +406,10 @@ export default {
   created() {
     this.sellPrice = this.currentCoin.price;
     this.limitSell = this.currentCoin.price;
+    this.$socket.emit('user_connected', {
+      apiKey: this.getAPIKey,
+      secret: this.getSecret
+    });
   }
 };
 </script>

@@ -24,14 +24,8 @@ export default {
   data() {
     return {};
   },
-  sockets: {
-    active_orders: function(data) {
-      this.activeOrders = data;
-    }
-  },
   methods: {
     cancelEliotOrder(order) {
-      console.log('cancel');
       this.$socket.emit('cancel_order', order);
     }
   },
