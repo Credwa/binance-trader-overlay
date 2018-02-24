@@ -41,14 +41,6 @@ export default {
     };
   },
   methods: {
-    ...mapMutations([
-      'setEliotOrders'
-    ]),
-  },
-  sockets: {
-    active_orders: function(data) {
-      this.setEliotOrders(data);
-    }
   }
 };
 </script>

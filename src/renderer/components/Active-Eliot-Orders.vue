@@ -8,6 +8,7 @@
           <v-icon dark large style="cursor:pointer" class="remove" @click="hideMenu">remove</v-icon>
         </div>
     <eliot-order v-for="order in getEliotOrders" :eliotOrder="order" :key="order.key"> </eliot-order>
+    <h2 v-if="!isThereEliotOrders" style="color:red;">No Eliot Orders</h2>
   </div>
 </template>
 
@@ -25,33 +26,34 @@ export default {
   },
   sockets: {
     active_orders: function(data) {
-      console.log(data);
-      this.activeOrders = data;
+      this.setEliotOrders(data);
     }
   },
   methods: {
+    ...mapMutations(['setEliotOrders']),
     hideMenu() {
       let currWindow = this.$electron.remote.getCurrentWindow();
       currWindow.minimize();
     },
     goBack() {
-      let loginWindow = this.$electron.remote.getCurrentWindow();
-      let screenSize = this.$electron.screen.getPrimaryDisplay().size;
-      let newWindowWidth = Math.floor(screenSize.width / 4.35);
-      let newWindowHeight = Math.floor(screenSize.height / 1.2);
-      loginWindow.setAlwaysOnTop(true);
-      loginWindow.setPosition(
-        screenSize.width - 15 - newWindowWidth,
-        screenSize.height - newWindowHeight - 100
-      );
-      loginWindow.setSize(newWindowWidth, newWindowHeight);
       window.history.go(-1);
     }
   },
   computed: {
-    ...mapGetters(['getEliotOrders'])
+    ...mapGetters(['getEliotOrders', 'getAPIKey', 'getSecret']),
+    isThereEliotOrders() {
+      if (Object.keys(this.getEliotOrders).length > 0) {
+        return true;
+      }
+      return false;
+    }
   },
-  created() {}
+  mounted() {
+    this.$socket.emit('user_connected', {
+      apiKey: this.getAPIKey,
+      secret: this.getSecret
+    });
+  }
 };
 </script>
 

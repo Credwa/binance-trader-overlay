@@ -25,12 +25,21 @@ export default {
     return {};
   },
   methods: {
+    ...mapMutations(['setEliotOrders']),
     cancelEliotOrder(order) {
       this.$socket.emit('cancel_order', order);
-    }
+      let newOrdersKeys = Object.keys(this.getEliotOrders).filter((val) => {
+        return this.getEliotOrders[val] !== order;
+      })
+      let newOrders = {}
+      newOrdersKeys.forEach((vals) => {
+        this.$set(newOrders, vals, this.getEliotOrders[vals])
+      })
+      this.setEliotOrders(newOrders);
+    },
   },
   computed: {
-    ...mapGetters(['getAPIKey', 'getSecret'])
+    ...mapGetters(['getAPIKey', 'getSecret', 'getEliotOrders']),
   },
   created() {}
 };

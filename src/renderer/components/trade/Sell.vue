@@ -406,10 +406,6 @@ export default {
   created() {
     this.sellPrice = this.currentCoin.price;
     this.limitSell = this.currentCoin.price;
-    this.$socket.emit('user_connected', {
-      apiKey: this.getAPIKey,
-      secret: this.getSecret
-    });
   }
 };
 </script>
