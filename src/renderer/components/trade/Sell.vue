@@ -156,7 +156,7 @@
                   type="numberl"
                   v-model="gainPercentProtection"
                 ></v-text-field>
-
+                <v-checkbox label="Create Test Order" v-model="testOrder" light ></v-checkbox>
                 <v-checkbox label="Subscribe to Eliot-Order updates for this coin" v-model="emailSub" light></v-checkbox>
                 <p v-if="emailSub" style="color:red">Check spam for updates!*</p>
                 <v-text-field
@@ -190,6 +190,7 @@ export default {
       gainPercentProtection: 0,
       emailSub: false,
       email: null,
+      testOrder: false,
       buyRow: 1,
       preBuy: {
         off: 1,
@@ -365,6 +366,8 @@ export default {
           trail: this.row === 'customVal' ? this.trailPerc.customVal : this.row,
           gainProtection: this.gainPercentProtection,
           email: this.email,
+          test: this.testOrder,
+          createdAt: new Date().getTime(),
           preBuy:
             this.buyRow === 1
               ? null

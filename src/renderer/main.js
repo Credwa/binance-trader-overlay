@@ -10,8 +10,8 @@ import {store} from './../store/store';
 import('../../node_modules/vuetify/dist/vuetify.min.css');
 
 Vue.use(Vuetify);
-Vue.use(VueSocketio, 'https://desolate-lake-73523.herokuapp.com/');
-// Vue.use(VueSocketio, 'http://localhost:3000');
+// Vue.use(VueSocketio, 'https://desolate-lake-73523.herokuapp.com/');
+Vue.use(VueSocketio, 'http://localhost:3000');
 
 if (!process.env.IS_WEB) Vue.use(require('vue-electron'));
 Vue.config.productionTip = false;
