@@ -544,6 +544,8 @@ label {
 .drag {
   -webkit-app-region: drag;
   cursor: pointer;
+  width: 90vw;
+  background-color: rgba(144,148,155,.6);
 }
 .infos {
   display: flex;
@@ -562,6 +564,5 @@ label {
   justify-content: space-between;
   flex-direction: row;
   margin-top: 1%;
-  margin-left: 2%;
 }
 </style>
