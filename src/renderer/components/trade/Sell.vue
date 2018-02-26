@@ -367,6 +367,10 @@ export default {
           gainProtection: this.gainPercentProtection,
           email: this.email,
           test: this.testOrder,
+          start: {
+            firstPrice: this.currentCoin.price,
+            firstStopPrice: this.calculatedInitialStopPrice
+          },
           createdAt: new Date().getTime(),
           preBuy:
             this.buyRow === 1
