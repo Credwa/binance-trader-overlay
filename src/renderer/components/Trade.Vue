@@ -296,10 +296,12 @@ export default {
       'setCurrentCoinPrice',
       'setBalanceMainCoin'
     ]),
+    // Minimize window
     hideMenu() {
       let currWindow = this.$electron.remote.getCurrentWindow();
       currWindow.minimize();
     },
+    // Navigate to the previous window
     goBack() {
       let loginWindow = this.$electron.remote.getCurrentWindow();
       let screenSize = this.$electron.screen.getPrimaryDisplay().size;
@@ -313,6 +315,7 @@ export default {
       loginWindow.setSize(newWindowWidth, newWindowHeight);
       window.history.go(-1);
     },
+
     percentSellAmount(percent) {
       this.sellAmount = Math.floor(
         (this.getCurrentCoin.amount * percent).toFixed(2)
@@ -493,6 +496,7 @@ export default {
       }, 5000);
       this.sellAmount = 0;
     },
+    // Update balance when new trade comes in
     balance_update(data) {
       for (let obj of data.B) {
         let { a: asset, f: available, l: onOrder } = obj;
@@ -508,6 +512,7 @@ export default {
         }
       }
     },
+    // show toast when trade status change
     orderUpdate(data) {
       this.snackbar.status = true;
       if (data.status === 'NEW') {

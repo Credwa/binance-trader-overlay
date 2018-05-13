@@ -31,10 +31,12 @@ export default {
   },
   methods: {
     ...mapMutations(['setEliotOrders']),
+    // Minimize window
     hideMenu() {
       let currWindow = this.$electron.remote.getCurrentWindow();
       currWindow.minimize();
     },
+    // Go back to previous window
     goBack() {
       window.history.go(-1);
     }

@@ -10,6 +10,8 @@ import {store} from './../store/store';
 import('../../node_modules/vuetify/dist/vuetify.min.css');
 
 Vue.use(Vuetify);
+
+// connect to socket
 // Vue.use(VueSocketio, 'https://desolate-lake-73523.herokuapp.com/');
 Vue.use(VueSocketio, 'ec2-54-224-58-35.compute-1.amazonaws.com:3000');
 // Vue.use(VueSocketio, 'http://localhost:3000');

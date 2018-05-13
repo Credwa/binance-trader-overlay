@@ -178,12 +178,12 @@
 </template>
 
 <script>
-const binance = require('node-binance-api');
-import { mapMutations, mapGetters } from 'vuex';
-import { validationMixin } from 'vuelidate';
-import { required } from 'vuelidate/lib/validators';
+const binance = require("node-binance-api");
+import { mapMutations, mapGetters } from "vuex";
+import { validationMixin } from "vuelidate";
+import { required } from "vuelidate/lib/validators";
 export default {
-  props: ['currentCoin'],
+  props: ["currentCoin"],
   data() {
     return {
       gainPercProtection: false,
@@ -205,11 +205,11 @@ export default {
       trailPerc: {
         one: 1,
         two: 2,
-        custom: 'customVal',
+        custom: "customVal",
         customVal: 3
       },
-      current_key: 'Limit',
-      items: ['Limit', 'Market', 'Stop-Limit', 'Eliot-Order'],
+      current_key: "Limit",
+      items: ["Limit", "Market", "Stop-Limit", "Eliot-Order"],
       sellAmount: 0,
       stopSell: parseFloat(0).toFixed(8),
       limitSell: parseFloat(0).toFixed(8),
@@ -223,30 +223,30 @@ export default {
       optTrade: null,
       snackbarError: {
         status: false,
-        y: 'top',
+        y: "top",
         x: null,
-        mode: '',
+        mode: "",
         timeout: 3000,
-        text: '',
-        color: 'red lighten-6'
+        text: "",
+        color: "red lighten-6"
       },
       errorMessage: null
     };
   },
   watch: {
     optTrade: function(newVal, oldVal) {
-      if (this.current_key === 'Limit' && this.sellPrice > 0) {
+      if (this.current_key === "Limit" && this.sellPrice > 0) {
         if (Number(newVal) > Number(this.currentCoin.amount * this.sellPrice)) {
           this.optTrade = this.currentCoin.amount * this.sellPrice;
         } else {
           this.sellAmount = (this.optTrade / this.sellPrice).toFixed(8);
         }
       } else if (
-        this.current_key === 'Market' ||
-        this.current_key === 'Eliot-Order'
+        this.current_key === "Market" ||
+        this.current_key === "Eliot-Order"
       ) {
         this.sellAmount = (this.optTrade / this.currentCoin.price).toFixed(8);
-      } else if (this.current_key === 'Stop-Limit' && this.limitSell) {
+      } else if (this.current_key === "Stop-Limit" && this.limitSell) {
         if (Number(newVal) > Number(this.currentCoin.amount * this.limitSell)) {
           this.optTrade = this.currentCoin.amount * this.limitSell;
         } else {
@@ -258,48 +258,48 @@ export default {
       if (Number(newAmt) > Number(this.currentCoin.amount)) {
         this.sellAmount = this.currentCoin.amount;
       } else {
-        if (this.current_key === 'Limit' && this.sellPrice > 0) {
+        if (this.current_key === "Limit" && this.sellPrice > 0) {
           this.optTrade = (this.sellAmount * this.sellPrice).toFixed(8);
         } else if (
-          this.current_key === 'Market' ||
-          this.current_key === 'Eliot-Order'
+          this.current_key === "Market" ||
+          this.current_key === "Eliot-Order"
         ) {
           this.optTrade = (this.sellAmount * this.currentCoin.price).toFixed(8);
-        } else if (this.current_key === 'Stop-Limit' && this.limitSell) {
+        } else if (this.current_key === "Stop-Limit" && this.limitSell) {
           this.optTrade = (this.sellAmount * this.limitSell).toFixed(8);
         }
       }
     },
     sellPrice: function(newPrice, oldPrice) {
-      if (this.current_key === 'Limit') {
+      if (this.current_key === "Limit") {
         this.optTrade = this.sellAmount * this.sellPrice;
       }
     },
     limitSell: function(newPrice, oldPrice) {
-      if (this.current_key === 'Stop-Limit') {
+      if (this.current_key === "Stop-Limit") {
         this.sellAmount = this.optTrade / this.limitSell;
       }
     }
   },
   methods: {
     ...mapMutations([
-      'setPriceMainCoin',
-      'setNewOrder',
-      'setOrderChange',
-      'setOrderFailed',
-      'setCurrentCoin',
-      'setCurrentCoinPrice',
-      'setBalanceMainCoin'
+      "setPriceMainCoin",
+      "setNewOrder",
+      "setOrderChange",
+      "setOrderFailed",
+      "setCurrentCoin",
+      "setCurrentCoinPrice",
+      "setBalanceMainCoin"
     ]),
     viewEliotOrders() {
-      this.$router.push('active-eliot-orders');
+      this.$router.push("active-eliot-orders");
     },
     placesellOrder(type) {
       this.loading = true;
       let self = this;
-      if (type === 'Market') {
+      if (type === "Market") {
         binance.marketSell(
-          this.currentCoin.name + 'BTC',
+          this.currentCoin.name + "BTC",
           this.sellAmount,
           function(resp) {
             if (resp.msg) {
@@ -315,12 +315,12 @@ export default {
             }
           }
         );
-      } else if (type === 'Limit') {
+      } else if (type === "Limit") {
         binance.sell(
-          this.currentCoin.name + 'BTC',
+          this.currentCoin.name + "BTC",
           this.sellAmount,
           this.sellPrice,
-          { type: 'LIMIT' },
+          { type: "LIMIT" },
           (error, response) => {
             self.loading = false;
             if (error.msg) {
@@ -335,12 +335,12 @@ export default {
             }
           }
         );
-      } else if (type === 'Stop-Limit') {
+      } else if (type === "Stop-Limit") {
         binance.sell(
-          this.currentCoin.name + 'BTC',
+          this.currentCoin.name + "BTC",
           this.sellAmount,
           this.limitSell,
-          { stopPrice: this.stopSell, type: 'TAKE_PROFIT_LIMIT' },
+          { stopPrice: this.stopSell, type: "TAKE_PROFIT_LIMIT" },
           function(resp) {
             if (resp.msg) {
               self.snackbarError.text = resp.msg;
@@ -355,7 +355,7 @@ export default {
             }
           }
         );
-      } else if (type === 'Eliot-Order') {
+      } else if (type === "Eliot-Order") {
         let data = {
           APIKEY: this.getAPIKey,
           APISECRET: this.getSecret,
@@ -363,7 +363,7 @@ export default {
           trailingSellStopPrice: this.calculatedInitialStopPrice,
           amount: this.sellAmount,
           symbol: this.currentCoin.name,
-          trail: this.row === 'customVal' ? this.trailPerc.customVal : this.row,
+          trail: this.row === "customVal" ? this.trailPerc.customVal : this.row,
           gainProtection: this.gainPercentProtection,
           email: this.email,
           test: this.testOrder,
@@ -382,10 +382,10 @@ export default {
                   }
                 : null
         };
-        self.$socket.emit('trailing_sell', data);
+        self.$socket.emit("trailing_sell", data);
       }
       setTimeout(() => {
-        this.errorMessage = 'Failed to sell';
+        this.errorMessage = "Failed to sell";
         this.loading = false;
       }, 5000);
       this.sellAmount = 0;
@@ -393,16 +393,16 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'getAPIKey',
-      'getSecret',
-      'getCurrentCoin',
-      'getCurrentCoinPrice',
-      'getBalanceMainCoin',
-      'getPriceMainCoin'
+      "getAPIKey",
+      "getSecret",
+      "getCurrentCoin",
+      "getCurrentCoinPrice",
+      "getBalanceMainCoin",
+      "getPriceMainCoin"
     ]),
     calculatedInitialStopPrice() {
       let trail = 0;
-      if (this.row === 'customVal') {
+      if (this.row === "customVal") {
         trail = this.trailPerc.customVal;
       } else {
         trail = this.row;

@@ -168,9 +168,12 @@ export default {
       'setOrderFailed',
       'setCurrentCoin'
     ]),
+
+    // Navigate to the previous window
     goBack() {
       window.history.go(-1);
     },
+    // Minimize window
     hideMenu() {
       let currWindow = this.$electron.remote.getCurrentWindow();
       currWindow.minimize();
@@ -199,6 +202,7 @@ export default {
         }, 1000);
       });
     },
+    // Filter for searching symbols
     customFilter(items, filterKey) {
       if (filterKey) {
         let search = new RegExp(
